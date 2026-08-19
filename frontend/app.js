@@ -126,19 +126,17 @@ function renderKPIs() {
 
     document.getElementById("kpi-team-spend").innerText = `$${teamSpend.toFixed(4)}`;
     document.getElementById("kpi-team-limit").innerText = `/ $${teamLimit.toFixed(2)}`;
-    
+
     const teamBar = document.getElementById("kpi-team-bar");
     teamBar.style.width = `${teamPct}%`;
-    teamBar.className = "progress-bar" + (teamPct >= 100 ? " danger" : teamPct >= 80 ? " warn" : "");
+    teamBar.className = "progress-fill" + (teamPct >= 100 ? " danger" : teamPct >= 80 ? " warn" : "");
 
     const statusEl = document.getElementById("kpi-team-status");
     statusEl.innerText = teamPct >= 100 ? "EXHAUSTED" : teamPct >= 80 ? "WARNING" : "NORMAL";
-    statusEl.className = "status-indicator " + (teamPct >= 100 ? "danger" : teamPct >= 80 ? "warn" : "safe");
+    statusEl.className = "badge " + (teamPct >= 100 ? "danger" : teamPct >= 80 ? "warn" : "safe");
     document.getElementById("kpi-team-pct").innerText = `${teamPct.toFixed(1)}% Consumed`;
 
-    // Counts
-    let warnCount = 0;
-    let blockCount = 0;
+    let warnCount = 0, blockCount = 0;
     state.agents.forEach(a => {
         const pct = (a.current_spend_usd / a.monthly_limit_usd) * 100;
         if (pct >= 100 || a.status === "PAUSED") blockCount++;
@@ -162,53 +160,36 @@ function renderAgentCards() {
     }
 
     container.innerHTML = state.agents.map(agent => {
-        const limit = agent.monthly_limit_usd || 50.0;
+        const limit = Math.max(agent.monthly_limit_usd || 50.0, 1e-9);
         const spend = agent.current_spend_usd || 0.0;
-        const pct = Math.min(100, (spend / limit) * 100);
-        
-        let statusClass = "safe";
-        let statusLabel = agent.status || "ACTIVE";
-        let barClass = "";
+        const pct   = Math.min(100, (spend / limit) * 100);
 
-        if (agent.status === "PAUSED") {
-            statusClass = "danger";
-            statusLabel = "PAUSED (RUNAWAY)";
-            barClass = "danger";
-        } else if (pct >= 100) {
-            statusClass = "danger";
-            statusLabel = "EXHAUSTED";
-            barClass = "danger";
-        } else if (pct >= 80) {
-            statusClass = "warn";
-            statusLabel = "WARNING (80%+)";
-            barClass = "warn";
-        }
+        let badgeClass = "safe", statusLabel = agent.status || "ACTIVE", barClass = "";
+        if (agent.status === "PAUSED")  { badgeClass = "danger"; statusLabel = "PAUSED (RUNAWAY)"; barClass = " danger"; }
+        else if (pct >= 100)            { badgeClass = "danger"; statusLabel = "EXHAUSTED";       barClass = " danger"; }
+        else if (pct >= 80)             { badgeClass = "warn";   statusLabel = "WARNING (80%+)";  barClass = " warn"; }
 
         return `
-            <div class="glass-panel agent-card">
-                <div class="agent-card-header">
+            <div class="card agent-card">
+                <div class="agent-card-head">
                     <div>
                         <div class="agent-name">${agent.name}</div>
-                        <div class="agent-id-tag">${agent.agent_id}</div>
+                        <div class="agent-id">${agent.agent_id}</div>
                     </div>
-                    <span class="agent-status-badge ${statusClass}">${statusLabel}</span>
+                    <span class="badge ${badgeClass}">${statusLabel}</span>
                 </div>
-
-                <div class="agent-spend-stat">
+                <div class="agent-spend-row">
                     <span class="agent-spend-val">$${spend.toFixed(4)}</span>
                     <span class="agent-limit-val">Limit: $${limit.toFixed(2)}/mo (${pct.toFixed(1)}%)</span>
                 </div>
-
-                <div class="progress-bar-container">
-                    <div class="progress-bar ${barClass}" style="width: ${pct}%"></div>
+                <div class="progress-wrap">
+                    <div class="progress-fill${barClass}" style="width:${pct}%"></div>
                 </div>
-
-                <div class="agent-models-row">
-                    <div class="model-tag">Preferred: <span>${agent.preferred_model}</span></div>
-                    <div class="model-tag">Fallback: <span>${agent.fallback_model}</span></div>
+                <div class="agent-models">
+                    <div class="model-label">Preferred: <span>${agent.preferred_model}</span></div>
+                    <div class="model-label">Fallback: <span>${agent.fallback_model}</span></div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join("");
 }
 
@@ -220,22 +201,17 @@ function renderAlerts() {
     }
 
     listEl.innerHTML = state.alerts.map(a => {
-        let typeClass = "warn";
-        if (a.alert_type === "HARD_BLOCK_100" || a.alert_type === "RUNAWAY_DETECTED" || a.alert_type === "SESSION_CLOSED") {
-            typeClass = "danger";
-        } else if (a.alert_type === "MODEL_SUBSTITUTED") {
-            typeClass = "sub";
-        }
-
+        let cls = "warn";
+        if (["HARD_BLOCK_100", "RUNAWAY_DETECTED", "SESSION_CLOSED"].includes(a.alert_type)) cls = "danger";
+        else if (a.alert_type === "MODEL_SUBSTITUTED") cls = "info";
         return `
-            <div class="alert-item ${typeClass}">
+            <div class="alert-item ${cls}">
                 <div><strong>[${a.alert_type}]</strong> ${a.message}</div>
                 <div class="alert-meta">
                     <span>Target: ${a.agent_id}</span>
                     <span>${a.created_at_iso || "Just now"}</span>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join("");
 }
 
@@ -244,32 +220,23 @@ function renderLedger() {
     document.getElementById("ledger-count").innerText = `${state.transactions.length} Transactions`;
 
     if (!state.transactions.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-table-state">Awaiting transactions... Click a simulation button above to begin.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-table">Awaiting transactions… Click a simulation button above to begin.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = state.transactions.map(tx => {
-        const subBadge = tx.is_substituted 
-            ? `<span class="sub-pill">REROUTED (-90%)</span>` 
-            : "";
-        
-        let dispClass = "allowed";
-        if (tx.disposition === "WARNED") dispClass = "warned";
-        else if (tx.disposition === "REROUTED") dispClass = "rerouted";
-        else if (tx.disposition === "BLOCKED") dispClass = "blocked";
+    const dispMap = { ALLOWED: "safe", WARNED: "warn", REROUTED: "info", BLOCKED: "danger" };
 
+    tbody.innerHTML = state.transactions.map(tx => {
+        const subTag = tx.is_substituted ? `<span class="sub-tag">REROUTED -90%</span>` : "";
+        const cls = dispMap[tx.disposition] || "safe";
         return `
             <tr>
                 <td><strong>${tx.agent_name || tx.agent_id}</strong></td>
-                <td>
-                    <span class="model-pill">${tx.model_used}</span>
-                    ${subBadge}
-                </td>
-                <td style="font-family: var(--font-mono)">${tx.total_tokens}</td>
-                <td style="font-family: var(--font-mono); font-weight: 700;">$${tx.cost_usd.toFixed(6)}</td>
-                <td><span class="disposition-badge ${dispClass}">${tx.disposition}</span></td>
-            </tr>
-        `;
+                <td><span class="model-tag-cell">${tx.model_used}</span>${subTag}</td>
+                <td class="mono-cell">${tx.total_tokens}</td>
+                <td class="mono-cell">$${tx.cost_usd.toFixed(6)}</td>
+                <td><span class="badge ${cls}">${tx.disposition}</span></td>
+            </tr>`;
     }).join("");
 }
 

@@ -4,24 +4,465 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIVAR | Enterprise Agent Budget Controller & Governance Gateway</title>
+    <meta name="description" content="Real-time AI Agent Spend & Cost Governance Gateway with multi-tier budget control, model substitution, and enterprise-grade observability.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ====================================================================
+           CSS RESET & DESIGN SYSTEM — LIGHT THEME ONLY
+        ==================================================================== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            /* Backgrounds */
+            --bg-page:        #f0f4f8;
+            --bg-surface:     #ffffff;
+            --bg-surface-2:   #f8fafc;
+            --bg-surface-3:   #f1f5f9;
+
+            /* Borders */
+            --border-light:   #e2e8f0;
+            --border-medium:  #cbd5e1;
+            --border-focus:   #4f46e5;
+
+            /* Brand */
+            --brand:          #4f46e5;
+            --brand-light:    #eef2ff;
+            --brand-mid:      #a5b4fc;
+
+            /* Text */
+            --text-h:         #0f172a;
+            --text-p:         #334155;
+            --text-muted:     #64748b;
+            --text-dim:       #94a3b8;
+
+            /* Semantic */
+            --safe:           #059669;
+            --safe-bg:        #ecfdf5;
+            --safe-border:    #a7f3d0;
+            --warn:           #d97706;
+            --warn-bg:        #fffbeb;
+            --warn-border:    #fcd34d;
+            --danger:         #dc2626;
+            --danger-bg:      #fef2f2;
+            --danger-border:  #fca5a5;
+            --info:           #0284c7;
+            --info-bg:        #f0f9ff;
+            --info-border:    #7dd3fc;
+            --purple:         #7c3aed;
+            --purple-bg:      #f5f3ff;
+
+            /* Shadows */
+            --shadow-xs:  0 1px 2px rgba(0,0,0,.06);
+            --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+            --shadow-md:  0 4px 6px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+            --shadow-lg:  0 10px 15px rgba(0,0,0,.06), 0 4px 6px rgba(0,0,0,.03);
+
+            /* Type */
+            --font:       'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --mono:       'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+            /* Radius */
+            --r-sm: 6px;
+            --r-md: 10px;
+            --r-lg: 14px;
+            --r-xl: 18px;
+        }
+
+        html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+        body {
+            font-family: var(--font);
+            background-color: var(--bg-page);
+            background-image:
+                radial-gradient(ellipse at 10% 10%, rgba(79,70,229,.06) 0, transparent 50%),
+                radial-gradient(ellipse at 90% 90%, rgba(2,132,199,.05) 0, transparent 50%);
+            color: var(--text-p);
+            min-height: 100vh;
+            padding-bottom: 48px;
+        }
+
+        /* ================================================================
+           NAVBAR
+        ================================================================ */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            height: 60px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: var(--shadow-xs);
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            gap: 16px;
+        }
+
+        .brand-container { display: flex; align-items: center; gap: 12px; }
+
+        .logo-box {
+            width: 36px; height: 36px;
+            background: var(--brand-light);
+            border: 1px solid var(--brand-mid);
+            border-radius: var(--r-md);
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+
+        .brand-title {
+            font-size: 1rem; font-weight: 800;
+            color: var(--text-h);
+            display: flex; align-items: center; gap: 8px;
+            white-space: nowrap;
+        }
+
+        .badge-tag {
+            font-size: .6rem; font-weight: 700; letter-spacing: .9px;
+            color: var(--brand); background: var(--brand-light);
+            border: 1px solid var(--brand-mid);
+            padding: 2px 7px; border-radius: var(--r-sm);
+        }
+
+        .brand-subtitle { font-size: .75rem; color: var(--text-muted); margin-top: 1px; }
+
+        .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .live-pill {
+            display: flex; align-items: center; gap: 7px;
+            font-size: .72rem; font-weight: 700; color: var(--safe);
+            background: var(--safe-bg); border: 1px solid var(--safe-border);
+            padding: 5px 12px; border-radius: 20px;
+        }
+
+        .pulse-dot {
+            width: 7px; height: 7px;
+            background: var(--safe); border-radius: 50%;
+            box-shadow: 0 0 5px var(--safe);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% { transform: scale(.9); opacity: .7; }
+            50%      { transform: scale(1.25); opacity: 1; }
+        }
+
+        .meta-tag {
+            display: flex; gap: 6px; align-items: center;
+            font-size: .72rem;
+            background: var(--bg-surface-2); border: 1px solid var(--border-light);
+            padding: 5px 11px; border-radius: var(--r-md);
+        }
+
+        .tag-label { color: var(--text-muted); font-weight: 600; }
+        .tag-val   { color: var(--text-h); font-family: var(--mono); font-weight: 600; font-size: .7rem; }
+
+        .btn-secondary {
+            display: flex; align-items: center; gap: 6px;
+            font-size: .78rem; font-weight: 600;
+            color: var(--text-p);
+            background: var(--bg-surface); border: 1px solid var(--border-light);
+            padding: 6px 13px; border-radius: var(--r-md);
+            cursor: pointer; box-shadow: var(--shadow-xs);
+            transition: all .18s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--danger-bg);
+            border-color: var(--danger-border);
+            color: var(--danger);
+        }
+
+        /* ================================================================
+           PAGE LAYOUT
+        ================================================================ */
+        .main-container {
+            max-width: 1440px;
+            margin: 24px auto;
+            padding: 0 24px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* ================================================================
+           CARD PRIMITIVES
+        ================================================================ */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow .2s, border-color .2s;
+        }
+
+        .card:hover { box-shadow: var(--shadow-md); border-color: var(--border-medium); }
+
+        /* ================================================================
+           KPI GRID
+        ================================================================ */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+
+        @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 600px)  { .kpi-grid { grid-template-columns: 1fr; } }
+
+        .kpi-card { padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+
+        .kpi-card.accent-card {
+            background: linear-gradient(135deg, #ffffff 0%, var(--info-bg) 100%);
+            border-color: var(--info-border);
+        }
+
+        .kpi-label {
+            font-size: .68rem; font-weight: 700; letter-spacing: .9px;
+            color: var(--text-muted); text-transform: uppercase;
+        }
+
+        .kpi-value-row { display: flex; align-items: baseline; gap: 8px; }
+
+        .kpi-value {
+            font-size: 1.85rem; font-weight: 800;
+            font-family: var(--mono); color: var(--text-h);
+            line-height: 1;
+        }
+
+        .kpi-sub {
+            font-size: .82rem; color: var(--text-muted);
+            font-family: var(--mono);
+        }
+
+        .kpi-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: .73rem; color: var(--text-muted);
+        }
+
+        .kpi-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+
+        /* ================================================================
+           PROGRESS BAR
+        ================================================================ */
+        .progress-wrap {
+            height: 7px; background: var(--bg-surface-3);
+            border-radius: 99px; overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+
+        .progress-fill {
+            height: 100%; border-radius: 99px;
+            background: var(--safe);
+            transition: width .35s ease, background .3s;
+        }
+
+        .progress-fill.warn   { background: var(--warn); }
+        .progress-fill.danger { background: var(--danger); }
+
+        /* ================================================================
+           BADGES / PILLS
+        ================================================================ */
+        .badge {
+            display: inline-flex; align-items: center;
+            font-size: .68rem; font-weight: 700;
+            padding: 2px 8px; border-radius: var(--r-sm);
+        }
+
+        .badge.safe   { background: var(--safe-bg);   color: var(--safe);   border: 1px solid var(--safe-border); }
+        .badge.warn   { background: var(--warn-bg);   color: var(--warn);   border: 1px solid var(--warn-border); }
+        .badge.danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+        .badge.info   { background: var(--info-bg);   color: var(--info);   border: 1px solid var(--info-border); }
+        .badge.purple { background: var(--purple-bg); color: var(--purple); border: 1px solid #ddd6fe; }
+        .badge.brand  { background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand-mid); }
+
+        /* ================================================================
+           SIMULATION SUITE
+        ================================================================ */
+        .sim-section { padding: 22px 24px; }
+
+        .section-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 16px; gap: 12px;
+        }
+
+        .section-title { font-size: 1rem; font-weight: 800; color: var(--text-h); }
+        .section-desc  { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+
+        .sim-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+
+        @media (max-width: 900px) { .sim-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 500px) { .sim-grid { grid-template-columns: 1fr; } }
+
+        .sim-btn {
+            display: flex; align-items: flex-start; gap: 11px;
+            padding: 14px 15px;
+            background: var(--bg-surface-2); border: 1px solid var(--border-light);
+            border-radius: var(--r-md); cursor: pointer; text-align: left;
+            box-shadow: var(--shadow-xs);
+            transition: all .2s;
+        }
+
+        .sim-btn:hover {
+            background: var(--brand-light); border-color: var(--brand-mid);
+            box-shadow: var(--shadow-md); transform: translateY(-1px);
+        }
+
+        .sim-icon {
+            width: 36px; height: 36px; border-radius: var(--r-sm);
+            display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0;
+        }
+
+        .sim-icon.cyan   { background: var(--info-bg);   border: 1px solid var(--info-border); }
+        .sim-icon.yellow { background: var(--warn-bg);   border: 1px solid var(--warn-border); }
+        .sim-icon.red    { background: var(--danger-bg); border: 1px solid var(--danger-border); }
+        .sim-icon.purple { background: var(--purple-bg); border: 1px solid #ddd6fe; }
+
+        .sim-btn-title { font-size: .82rem; font-weight: 700; color: var(--text-h); }
+        .sim-btn-desc  { font-size: .7rem;  color: var(--text-muted); margin-top: 3px; line-height: 1.35; }
+
+        /* ================================================================
+           MAIN SPLIT GRID
+        ================================================================ */
+        .dashboard-split { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; align-items: start; }
+
+        @media (max-width: 1024px) { .dashboard-split { grid-template-columns: 1fr; } }
+
+        .fleet-column, .activity-column { display: flex; flex-direction: column; gap: 14px; }
+
+        .sub-section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+
+        /* ================================================================
+           AGENT CARDS
+        ================================================================ */
+        .agent-card { padding: 18px 20px; display: flex; flex-direction: column; gap: 13px; }
+
+        .agent-card-head {
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+
+        .agent-name { font-size: .92rem; font-weight: 750; color: var(--text-h); }
+        .agent-id   { font-size: .68rem; color: var(--text-muted); font-family: var(--mono); margin-top: 2px; }
+
+        .agent-spend-row { display: flex; justify-content: space-between; align-items: baseline; }
+
+        .agent-spend-val {
+            font-size: 1.3rem; font-weight: 800;
+            font-family: var(--mono); color: var(--text-h);
+        }
+
+        .agent-limit-val { font-size: .78rem; color: var(--text-muted); font-family: var(--mono); }
+
+        .agent-models {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-light);
+            border-radius: var(--r-sm);
+            padding: 8px 11px;
+        }
+
+        .model-label { font-size: .7rem; color: var(--text-muted); }
+        .model-label span { color: var(--text-h); font-family: var(--mono); font-weight: 600; }
+
+        /* ================================================================
+           ALERTS BOX & LEDGER
+        ================================================================ */
+        .box-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-surface-2);
+            border-radius: var(--r-lg) var(--r-lg) 0 0;
+        }
+
+        .box-title { font-size: .9rem; font-weight: 750; color: var(--text-h); }
+
+        .alerts-list {
+            max-height: 210px; overflow-y: auto;
+            padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 8px;
+            background: var(--bg-surface);
+            border-radius: 0 0 var(--r-lg) var(--r-lg);
+        }
+
+        .alert-item {
+            padding: 10px 13px; border-radius: var(--r-sm);
+            font-size: .76rem; display: flex; flex-direction: column; gap: 4px;
+            border-left: 3px solid transparent;
+        }
+
+        .alert-item.warn   { background: var(--warn-bg);   border-color: var(--warn);   color: #92400e; }
+        .alert-item.danger { background: var(--danger-bg); border-color: var(--danger); color: #991b1b; }
+        .alert-item.info   { background: var(--info-bg);   border-color: var(--info);   color: #075985; }
+
+        .alert-meta {
+            font-size: .66rem; color: var(--text-muted);
+            display: flex; justify-content: space-between;
+        }
+
+        .empty-state {
+            font-size: .8rem; color: var(--text-dim);
+            padding: 24px; text-align: center;
+        }
+
+        /* ================================================================
+           LEDGER TABLE
+        ================================================================ */
+        .table-wrap {
+            overflow-x: auto; max-height: 300px;
+            background: var(--bg-surface);
+            border-radius: 0 0 var(--r-lg) var(--r-lg);
+        }
+
+        .ledger-table {
+            width: 100%; border-collapse: collapse;
+            font-size: .76rem; text-align: left;
+        }
+
+        .ledger-table th {
+            background: var(--bg-surface-3);
+            padding: 9px 15px;
+            color: var(--text-muted); font-weight: 700;
+            font-size: .66rem; letter-spacing: .7px; text-transform: uppercase;
+            border-bottom: 1px solid var(--border-light);
+            position: sticky; top: 0; z-index: 10;
+        }
+
+        .ledger-table td { padding: 11px 15px; border-bottom: 1px solid var(--bg-surface-3); color: var(--text-p); }
+
+        .ledger-table tr:last-child td { border-bottom: none; }
+        .ledger-table tbody tr:hover td { background: var(--bg-surface-2); }
+
+        .mono-cell { font-family: var(--mono); font-size: .73rem; font-weight: 600; color: var(--text-h); }
+
+        .model-tag-cell {
+            font-family: var(--mono); font-size: .7rem;
+            background: var(--bg-surface-2); border: 1px solid var(--border-light);
+            padding: 2px 6px; border-radius: 4px;
+        }
+
+        .sub-tag {
+            font-size: .62rem; font-weight: 700;
+            background: var(--info-bg); color: var(--info);
+            border: 1px solid var(--info-border);
+            padding: 1px 5px; border-radius: 4px;
+            margin-left: 5px;
+        }
+
+        .empty-table { text-align: center; color: var(--text-dim); padding: 32px !important; }
+    </style>
 </head>
-<body class="light-theme">
-    <!-- Header / Navbar -->
+<body>
+    <!-- ═══════════════════════════ NAVBAR ═══════════════════════════ -->
     <header class="navbar">
         <div class="brand-container">
             <div class="logo-box">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#6366f1" stroke-width="2" fill="rgba(99, 102, 241, 0.15)"/>
-                    <circle cx="12" cy="12" r="3" fill="#818cf8"/>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#4f46e5" stroke-width="1.8" fill="rgba(79,70,229,.12)"/>
+                    <circle cx="12" cy="12" r="3" fill="#4f46e5"/>
                 </svg>
             </div>
             <div>
-                <h1 class="brand-title">AIVAR <span class="badge-tag">GOVERNANCE OS</span></h1>
-                <p class="brand-subtitle">Real-Time AI Agent Spend & Cost Governance Gateway</p>
+                <div class="brand-title">AIVAR <span class="badge-tag">GOVERNANCE OS</span></div>
+                <div class="brand-subtitle">Real-Time AI Agent Spend &amp; Cost Governance Gateway</div>
             </div>
         </div>
         <div class="header-actions">
@@ -37,148 +478,145 @@
                 <span class="tag-label">STATE:</span>
                 <span class="tag-val">AWS DynamoDB</span>
             </div>
-            <button id="btn-reset" class="btn-secondary" title="Reset all spend counters to $0.00 for a fresh demo">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <button id="btn-reset" class="btn-secondary" title="Reset all spend counters to $0.00">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 Reset Demo
             </button>
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="main-container">
-        <!-- Top Metrics Overview Bar -->
+        <!-- ══════════════ KPI OVERVIEW ══════════════ -->
         <section class="kpi-grid">
-            <div class="kpi-card glass-panel">
-                <div class="kpi-label">ORGANIZATION BUDGET (MONTHLY)</div>
+            <!-- Org Budget -->
+            <div class="card kpi-card">
+                <div class="kpi-label">Organization Budget (Monthly)</div>
                 <div class="kpi-value-row">
                     <span class="kpi-value" id="kpi-team-spend">$0.0000</span>
-                    <span class="kpi-subtext" id="kpi-team-limit">/ $500.00</span>
+                    <span class="kpi-sub" id="kpi-team-limit">/ $500.00</span>
                 </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="kpi-team-bar" style="width: 0%;"></div>
+                <div class="progress-wrap">
+                    <div class="progress-fill" id="kpi-team-bar" style="width:0%"></div>
                 </div>
                 <div class="kpi-footer">
                     <span id="kpi-team-pct">0.0% Consumed</span>
-                    <span class="status-indicator safe" id="kpi-team-status">NORMAL</span>
+                    <span class="badge safe" id="kpi-team-status">NORMAL</span>
                 </div>
             </div>
 
-            <div class="kpi-card glass-panel">
-                <div class="kpi-label">TOTAL GOVERNED AGENTS</div>
+            <!-- Active Agents -->
+            <div class="card kpi-card">
+                <div class="kpi-label">Total Governed Agents</div>
                 <div class="kpi-value-row">
                     <span class="kpi-value" id="kpi-active-agents">3</span>
-                    <span class="kpi-subtext">Active Instances</span>
+                    <span class="kpi-sub">Active Instances</span>
                 </div>
-                <div class="kpi-details-row">
-                    <span class="pill-mini safe">3 Active</span>
-                    <span class="pill-mini warn" id="kpi-warn-count">0 Warning</span>
-                    <span class="pill-mini danger" id="kpi-block-count">0 Blocked</span>
+                <div class="kpi-pills">
+                    <span class="badge safe">3 Active</span>
+                    <span class="badge warn" id="kpi-warn-count">0 Warning</span>
+                    <span class="badge danger" id="kpi-block-count">0 Blocked</span>
                 </div>
             </div>
 
-            <div class="kpi-card glass-panel">
-                <div class="kpi-label">METERED TOKENS PROCESSED</div>
+            <!-- Tokens -->
+            <div class="card kpi-card">
+                <div class="kpi-label">Metered Tokens Processed</div>
                 <div class="kpi-value-row">
                     <span class="kpi-value" id="kpi-total-tokens">0</span>
-                    <span class="kpi-subtext">Tokens</span>
+                    <span class="kpi-sub">Tokens</span>
                 </div>
                 <div class="kpi-footer">
                     <span>Atomic Concurrency</span>
-                    <span class="status-indicator live">Sub-millisecond</span>
+                    <span class="badge brand">Sub-millisecond</span>
                 </div>
             </div>
 
-            <div class="kpi-card glass-panel highlight-card">
-                <div class="kpi-label">MODEL SUBSTITUTION SAVINGS</div>
+            <!-- Substitution Savings -->
+            <div class="card kpi-card accent-card">
+                <div class="kpi-label">Model Substitution Savings</div>
                 <div class="kpi-value-row">
-                    <span class="kpi-value text-accent" id="kpi-sub-count">0</span>
-                    <span class="kpi-subtext">Rerouted Calls</span>
+                    <span class="kpi-value" id="kpi-sub-count" style="color:var(--info)">0</span>
+                    <span class="kpi-sub">Rerouted Calls</span>
                 </div>
                 <div class="kpi-footer">
                     <span>Cheaper Fallback Rate</span>
-                    <span class="text-accent font-mono font-bold">-90.5% Cost</span>
+                    <span style="font-family:var(--mono);font-weight:800;color:var(--info)">-90.5% Cost</span>
                 </div>
             </div>
         </section>
 
-        <!-- Interactive Simulation Control Suite -->
-        <section class="simulation-section glass-panel">
+        <!-- ══════════════ SIMULATION SUITE ══════════════ -->
+        <div class="card sim-section">
             <div class="section-header">
                 <div>
-                    <h2 class="section-title">Interactive Multi-Agent Verification Suite</h2>
-                    <p class="section-desc">Trigger real-world workload scenarios to evaluate live governance criteria.</p>
+                    <div class="section-title">Interactive Multi-Agent Verification Suite</div>
+                    <div class="section-desc">Trigger real-world workload scenarios to evaluate live governance criteria.</div>
                 </div>
-                <div class="sim-speed-badge">Real-Time Concurrent Simulation</div>
+                <span class="badge brand">Real-Time Concurrent Simulation</span>
             </div>
-            
-            <div class="sim-actions-grid">
+            <div class="sim-grid">
                 <button class="sim-btn" id="btn-sim-concurrent">
-                    <div class="sim-btn-icon icon-cyan">⚡</div>
-                    <div class="sim-btn-content">
+                    <div class="sim-icon cyan">⚡</div>
+                    <div>
                         <div class="sim-btn-title">1. Test Concurrent Calls</div>
                         <div class="sim-btn-desc">Fires 3 agents simultaneously to test thread-safe atomic metering</div>
                     </div>
                 </button>
-
                 <button class="sim-btn" id="btn-sim-warn">
-                    <div class="sim-btn-icon icon-yellow">⚠️</div>
-                    <div class="sim-btn-content">
-                        <div class="sim-btn-title">2. Test 80% Warning & Fallback</div>
-                        <div class="sim-btn-desc">Pushes spend past 80% & triggers auto-reroute to cheaper model</div>
+                    <div class="sim-icon yellow">⚠️</div>
+                    <div>
+                        <div class="sim-btn-title">2. Test 80% Warning &amp; Fallback</div>
+                        <div class="sim-btn-desc">Pushes spend past 80% &amp; triggers auto-reroute to cheaper model</div>
                     </div>
                 </button>
-
                 <button class="sim-btn" id="btn-sim-block">
-                    <div class="sim-btn-icon icon-red">🛑</div>
-                    <div class="sim-btn-content">
+                    <div class="sim-icon red">🛑</div>
+                    <div>
                         <div class="sim-btn-title">3. Test 100% Hard Block</div>
                         <div class="sim-btn-desc">Exhausts budget and validates HTTP 429 budget-exhausted rejection</div>
                     </div>
                 </button>
-
                 <button class="sim-btn" id="btn-sim-runaway">
-                    <div class="sim-btn-icon icon-purple">🔄</div>
-                    <div class="sim-btn-content">
+                    <div class="sim-icon purple">🔄</div>
+                    <div>
                         <div class="sim-btn-title">4. Test Runaway Loop Detection</div>
-                        <div class="sim-btn-desc">Simulates recursive loop (>20%/hr velocity) and auto-pauses agent</div>
+                        <div class="sim-btn-desc">Simulates recursive loop (&gt;20%/hr velocity) and auto-pauses agent</div>
                     </div>
                 </button>
             </div>
-        </section>
+        </div>
 
-        <!-- Fleet Grid & Active Spend -->
+        <!-- ══════════════ MAIN SPLIT ══════════════ -->
         <section class="dashboard-split">
-            <!-- Left: Governed Agent Cards -->
+            <!-- LEFT: Agent Fleet -->
             <div class="fleet-column">
-                <div class="section-header">
-                    <h2 class="section-title">Governed Agent Fleet</h2>
-                    <span class="badge-count" id="agent-count-badge">3 Agents</span>
+                <div class="sub-section-header">
+                    <span class="section-title">Governed Agent Fleet</span>
+                    <span class="badge brand" id="agent-count-badge">3 Agents</span>
                 </div>
-                <div class="agent-cards-container" id="agent-cards-list">
-                    <!-- Populated dynamically via JS -->
-                </div>
+                <div id="agent-cards-list"></div>
             </div>
 
-            <!-- Right: Real-time Live Alerts & Transactions -->
+            <!-- RIGHT: Alerts + Ledger -->
             <div class="activity-column">
-                <!-- Alerts Feed -->
-                <div class="glass-panel alerts-box">
-                    <div class="box-header">
-                        <h3 class="box-title">Governance & Policy Alerts</h3>
-                        <span class="live-tag">LIVE STREAM</span>
+                <!-- Alerts -->
+                <div class="card" style="padding:0; overflow:hidden">
+                    <div class="box-head">
+                        <span class="box-title">Governance &amp; Policy Alerts</span>
+                        <span class="badge safe">LIVE STREAM</span>
                     </div>
                     <div class="alerts-list" id="alerts-list">
                         <div class="empty-state">No governance violations detected. System operating within budget policy.</div>
                     </div>
                 </div>
 
-                <!-- Transaction Ledger -->
-                <div class="glass-panel ledger-box">
-                    <div class="box-header">
-                        <h3 class="box-title">Real-Time Spend Ledger</h3>
-                        <span class="sub-counter" id="ledger-count">0 Transactions</span>
+                <!-- Ledger -->
+                <div class="card" style="padding:0; overflow:hidden">
+                    <div class="box-head">
+                        <span class="box-title">Real-Time Spend Ledger</span>
+                        <span id="ledger-count" style="font-family:var(--mono);font-size:.73rem;color:var(--text-muted);font-weight:600">0 Transactions</span>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-wrap">
                         <table class="ledger-table">
                             <thead>
                                 <tr>
@@ -190,9 +628,7 @@
                                 </tr>
                             </thead>
                             <tbody id="ledger-body">
-                                <tr>
-                                    <td colspan="5" class="empty-table-state">Awaiting transactions... Click a simulation button above to begin.</td>
-                                </tr>
+                                <tr><td colspan="5" class="empty-table">Awaiting transactions… Click a simulation button above to begin.</td></tr>
                             </tbody>
                         </table>
                     </div>
