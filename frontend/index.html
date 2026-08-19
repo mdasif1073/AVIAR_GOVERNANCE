@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIVAR | Enterprise Agent Budget Controller & Governance Gateway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="light-theme">
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="brand-container">
+            <div class="logo-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#6366f1" stroke-width="2" fill="rgba(99, 102, 241, 0.15)"/>
+                    <circle cx="12" cy="12" r="3" fill="#818cf8"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="brand-title">AIVAR <span class="badge-tag">GOVERNANCE OS</span></h1>
+                <p class="brand-subtitle">Real-Time AI Agent Spend & Cost Governance Gateway</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="live-pill">
+                <span class="pulse-dot"></span>
+                <span id="connection-status">GATEWAY LIVE</span>
+            </div>
+            <div class="meta-tag">
+                <span class="tag-label">PROVIDER:</span>
+                <span class="tag-val" id="provider-badge">Groq Cloud (LLaMA 3.3)</span>
+            </div>
+            <div class="meta-tag">
+                <span class="tag-label">STATE:</span>
+                <span class="tag-val">AWS DynamoDB</span>
+            </div>
+            <button id="btn-reset" class="btn-secondary" title="Reset all spend counters to $0.00 for a fresh demo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Reset Demo
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Top Metrics Overview Bar -->
+        <section class="kpi-grid">
+            <div class="kpi-card glass-panel">
+                <div class="kpi-label">ORGANIZATION BUDGET (MONTHLY)</div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpi-team-spend">$0.0000</span>
+                    <span class="kpi-subtext" id="kpi-team-limit">/ $500.00</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="kpi-team-bar" style="width: 0%;"></div>
+                </div>
+                <div class="kpi-footer">
+                    <span id="kpi-team-pct">0.0% Consumed</span>
+                    <span class="status-indicator safe" id="kpi-team-status">NORMAL</span>
+                </div>
+            </div>
+
+            <div class="kpi-card glass-panel">
+                <div class="kpi-label">TOTAL GOVERNED AGENTS</div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpi-active-agents">3</span>
+                    <span class="kpi-subtext">Active Instances</span>
+                </div>
+                <div class="kpi-details-row">
+                    <span class="pill-mini safe">3 Active</span>
+                    <span class="pill-mini warn" id="kpi-warn-count">0 Warning</span>
+                    <span class="pill-mini danger" id="kpi-block-count">0 Blocked</span>
+                </div>
+            </div>
+
+            <div class="kpi-card glass-panel">
+                <div class="kpi-label">METERED TOKENS PROCESSED</div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpi-total-tokens">0</span>
+                    <span class="kpi-subtext">Tokens</span>
+                </div>
+                <div class="kpi-footer">
+                    <span>Atomic Concurrency</span>
+                    <span class="status-indicator live">Sub-millisecond</span>
+                </div>
+            </div>
+
+            <div class="kpi-card glass-panel highlight-card">
+                <div class="kpi-label">MODEL SUBSTITUTION SAVINGS</div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value text-accent" id="kpi-sub-count">0</span>
+                    <span class="kpi-subtext">Rerouted Calls</span>
+                </div>
+                <div class="kpi-footer">
+                    <span>Cheaper Fallback Rate</span>
+                    <span class="text-accent font-mono font-bold">-90.5% Cost</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulation Control Suite -->
+        <section class="simulation-section glass-panel">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Interactive Multi-Agent Verification Suite</h2>
+                    <p class="section-desc">Trigger real-world workload scenarios to evaluate live governance criteria.</p>
+                </div>
+                <div class="sim-speed-badge">Real-Time Concurrent Simulation</div>
+            </div>
+            
+            <div class="sim-actions-grid">
+                <button class="sim-btn" id="btn-sim-concurrent">
+                    <div class="sim-btn-icon icon-cyan">⚡</div>
+                    <div class="sim-btn-content">
+                        <div class="sim-btn-title">1. Test Concurrent Calls</div>
+                        <div class="sim-btn-desc">Fires 3 agents simultaneously to test thread-safe atomic metering</div>
+                    </div>
+                </button>
+
+                <button class="sim-btn" id="btn-sim-warn">
+                    <div class="sim-btn-icon icon-yellow">⚠️</div>
+                    <div class="sim-btn-content">
+                        <div class="sim-btn-title">2. Test 80% Warning & Fallback</div>
+                        <div class="sim-btn-desc">Pushes spend past 80% & triggers auto-reroute to cheaper model</div>
+                    </div>
+                </button>
+
+                <button class="sim-btn" id="btn-sim-block">
+                    <div class="sim-btn-icon icon-red">🛑</div>
+                    <div class="sim-btn-content">
+                        <div class="sim-btn-title">3. Test 100% Hard Block</div>
+                        <div class="sim-btn-desc">Exhausts budget and validates HTTP 429 budget-exhausted rejection</div>
+                    </div>
+                </button>
+
+                <button class="sim-btn" id="btn-sim-runaway">
+                    <div class="sim-btn-icon icon-purple">🔄</div>
+                    <div class="sim-btn-content">
+                        <div class="sim-btn-title">4. Test Runaway Loop Detection</div>
+                        <div class="sim-btn-desc">Simulates recursive loop (>20%/hr velocity) and auto-pauses agent</div>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Fleet Grid & Active Spend -->
+        <section class="dashboard-split">
+            <!-- Left: Governed Agent Cards -->
+            <div class="fleet-column">
+                <div class="section-header">
+                    <h2 class="section-title">Governed Agent Fleet</h2>
+                    <span class="badge-count" id="agent-count-badge">3 Agents</span>
+                </div>
+                <div class="agent-cards-container" id="agent-cards-list">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Right: Real-time Live Alerts & Transactions -->
+            <div class="activity-column">
+                <!-- Alerts Feed -->
+                <div class="glass-panel alerts-box">
+                    <div class="box-header">
+                        <h3 class="box-title">Governance & Policy Alerts</h3>
+                        <span class="live-tag">LIVE STREAM</span>
+                    </div>
+                    <div class="alerts-list" id="alerts-list">
+                        <div class="empty-state">No governance violations detected. System operating within budget policy.</div>
+                    </div>
+                </div>
+
+                <!-- Transaction Ledger -->
+                <div class="glass-panel ledger-box">
+                    <div class="box-header">
+                        <h3 class="box-title">Real-Time Spend Ledger</h3>
+                        <span class="sub-counter" id="ledger-count">0 Transactions</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th>Agent</th>
+                                    <th>Model Requested / Used</th>
+                                    <th>Tokens</th>
+                                    <th>Cost (USD)</th>
+                                    <th>Disposition</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-body">
+                                <tr>
+                                    <td colspan="5" class="empty-table-state">Awaiting transactions... Click a simulation button above to begin.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

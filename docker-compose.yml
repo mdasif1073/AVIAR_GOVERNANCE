@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  aivar-gateway:
+    build: .
+    container_name: aivar-budget-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-mock_key}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-mock_secret}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
