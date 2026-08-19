@@ -262,7 +262,7 @@ function bindSimulationButtons() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     agent_id: agentId,
-                    model: "llama-3.3-70b-versatile",
+                    model: "openai/gpt-oss-120b",
                     messages: [{ role: "user", content: prompts[idx] }]
                 })
             });
@@ -278,8 +278,8 @@ function bindSimulationButtons() {
             body: JSON.stringify({
                 agent_id: "agent-support-01",
                 monthly_limit_usd: 0.0003, // Small limit to immediately hit 80% on next call
-                preferred_model: "llama-3.3-70b-versatile",
-                fallback_model: "llama-3.1-8b-instant"
+                preferred_model: "openai/gpt-oss-120b",
+                fallback_model: "openai/gpt-oss-20b"
             })
         });
 
@@ -289,7 +289,7 @@ function bindSimulationButtons() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 agent_id: "agent-support-01",
-                model: "llama-3.3-70b-versatile",
+                model: "openai/gpt-oss-120b",
                 messages: [{ role: "user", content: "Customer asking for full system diagnostics and account records." }]
             })
         });
@@ -304,8 +304,8 @@ function bindSimulationButtons() {
             body: JSON.stringify({
                 agent_id: "agent-analytics-02",
                 monthly_limit_usd: 0.00001,
-                preferred_model: "llama-3.3-70b-versatile",
-                fallback_model: "llama-3.1-8b-instant"
+                preferred_model: "openai/gpt-oss-120b",
+                fallback_model: "openai/gpt-oss-20b"
             })
         });
 
@@ -316,7 +316,7 @@ function bindSimulationButtons() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     agent_id: "agent-analytics-02",
-                    model: "llama-3.3-70b-versatile",
+                    model: "openai/gpt-oss-120b",
                     messages: [{ role: "user", content: "Run comprehensive multi-year financial regression analysis." }]
                 })
             });
@@ -338,8 +338,8 @@ function bindSimulationButtons() {
             body: JSON.stringify({
                 agent_id: "agent-research-03",
                 monthly_limit_usd: 0.0005,
-                preferred_model: "llama-3.3-70b-versatile",
-                fallback_model: "llama-3.1-8b-instant"
+                preferred_model: "openai/gpt-oss-120b",
+                fallback_model: "openai/gpt-oss-20b"
             })
         });
 
@@ -350,7 +350,7 @@ function bindSimulationButtons() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     agent_id: "agent-research-03",
-                    model: "llama-3.3-70b-versatile",
+                    model: "openai/gpt-oss-120b",
                     messages: [{ role: "user", content: `Recursive search step #${i + 1}` }]
                 })
             });

@@ -39,7 +39,7 @@ async def run_simulation():
             start = time.time()
             resp = await client.post("/v1/chat/completions", json={
                 "agent_id": agent_id,
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": prompt}]
             })
             duration = round((time.time() - start) * 1000, 2)
@@ -57,14 +57,14 @@ async def run_simulation():
         await client.post("/api/budgets/agent", json={
             "agent_id": "agent-support-01",
             "monthly_limit_usd": 0.0002,
-            "preferred_model": "llama-3.3-70b-versatile",
-            "fallback_model": "llama-3.1-8b-instant"
+            "preferred_model": "openai/gpt-oss-120b",
+            "fallback_model": "openai/gpt-oss-20b"
         })
 
         # Fire request
         resp = await client.post("/v1/chat/completions", json={
             "agent_id": "agent-support-01",
-            "model": "llama-3.3-70b-versatile",
+            "model": "openai/gpt-oss-120b",
             "messages": [{"role": "user", "content": "Help with priority SLA escalation."}],
             "allow_model_substitution": True
         })
@@ -79,14 +79,14 @@ async def run_simulation():
         await client.post("/api/budgets/agent", json={
             "agent_id": "agent-analytics-02",
             "monthly_limit_usd": 0.000001,
-            "preferred_model": "llama-3.3-70b-versatile",
-            "fallback_model": "llama-3.1-8b-instant"
+            "preferred_model": "openai/gpt-oss-120b",
+            "fallback_model": "openai/gpt-oss-20b"
         })
 
         try:
             resp = await client.post("/v1/chat/completions", json={
                 "agent_id": "agent-analytics-02",
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": "Generate large portfolio simulation."}]
             })
             if resp.status_code == 429:

@@ -1,85 +1,73 @@
 from typing import Dict, Tuple
 
-# Pricing in USD per 1 Million Tokens (Input / Output)
-# Sources: Groq Cloud official pricing, OpenAI pricing, Google Gemini pricing
-MODEL_PRICING: Dict[str, Dict[str, float]] = {
-    # Groq Models
-    "llama-3.3-70b-versatile": {
-        "input_per_million": 0.59,
-        "output_per_million": 0.79,
-        "tier": "heavyweight",
-        "provider": "groq",
-    },
-    "llama-3.1-70b-versatile": {
-        "input_per_million": 0.59,
-        "output_per_million": 0.79,
-        "tier": "heavyweight",
-        "provider": "groq",
-    },
-    "llama-3.1-8b-instant": {
-        "input_per_million": 0.05,
-        "output_per_million": 0.08,
-        "tier": "lightweight",
-        "provider": "groq",
-    },
-    "llama3-8b-8192": {
-        "input_per_million": 0.05,
-        "output_per_million": 0.08,
-        "tier": "lightweight",
-        "provider": "groq",
-    },
-    "mixtral-8x7b-32768": {
-        "input_per_million": 0.24,
-        "output_per_million": 0.24,
-        "tier": "midweight",
-        "provider": "groq",
-    },
-
-    # OpenAI Models
-    "gpt-4o": {
-        "input_per_million": 2.50,
-        "output_per_million": 10.00,
-        "tier": "heavyweight",
-        "provider": "openai",
-    },
-    "gpt-4o-mini": {
-        "input_per_million": 0.15,
+# Pricing in USD per 1 Million Tokens
+# Verified against this Groq account's /v1/models endpoint
+MODEL_PRICING: Dict[str, Dict] = {
+    "openai/gpt-oss-120b": {
+        "input_per_million":  0.15,
         "output_per_million": 0.60,
-        "tier": "lightweight",
-        "provider": "openai",
-    },
-
-    # Google Gemini Models
-    "gemini-1.5-pro": {
-        "input_per_million": 1.25,
-        "output_per_million": 5.00,
         "tier": "heavyweight",
-        "provider": "gemini",
+        "provider": "groq",
+        "display": "GPT OSS 120B (via Groq)",
     },
-    "gemini-1.5-flash": {
-        "input_per_million": 0.075,
+    "openai/gpt-oss-20b": {
+        "input_per_million":  0.075,
         "output_per_million": 0.30,
         "tier": "lightweight",
-        "provider": "gemini",
+        "provider": "groq",
+        "display": "GPT OSS 20B (via Groq)",
     },
-
-    # Default fallback rate for unlisted models
+    "openai/gpt-oss-safeguard-20b": {
+        "input_per_million":  0.075,
+        "output_per_million": 0.30,
+        "tier": "lightweight",
+        "provider": "groq",
+        "display": "Safety GPT OSS 20B (via Groq)",
+    },
+    "qwen/qwen3.6-27b": {
+        "input_per_million":  0.60,
+        "output_per_million": 3.00,
+        "tier": "midweight",
+        "provider": "groq",
+        "display": "Qwen 3.6 27B (via Groq)",
+    },
+    "groq/compound": {
+        "input_per_million":  0.20,
+        "output_per_million": 0.60,
+        "tier": "heavyweight",
+        "provider": "groq",
+        "display": "Groq Compound",
+    },
+    "groq/compound-mini": {
+        "input_per_million":  0.05,
+        "output_per_million": 0.20,
+        "tier": "lightweight",
+        "provider": "groq",
+        "display": "Groq Compound Mini",
+    },
     "default": {
-        "input_per_million": 0.50,
-        "output_per_million": 0.75,
+        "input_per_million":  0.15,
+        "output_per_million": 0.60,
         "tier": "standard",
-        "provider": "custom",
-    }
+        "provider": "groq",
+        "display": "Custom Model",
+    },
 }
 
-# Automatic model substitution mapping for cost-saving fallback under budget stress
+# Substitution map: expensive model -> cheaper fallback under budget pressure
+# 120B -> 20B: ~50% cost reduction
+# compound -> compound-mini: ~75% cost reduction
 MODEL_SUBSTITUTION_MAP: Dict[str, str] = {
-    "llama-3.3-70b-versatile": "llama-3.1-8b-instant",
-    "llama-3.1-70b-versatile": "llama-3.1-8b-instant",
-    "gpt-4o": "gpt-4o-mini",
-    "gemini-1.5-pro": "gemini-1.5-flash",
-    "mixtral-8x7b-32768": "llama-3.1-8b-instant",
+    "openai/gpt-oss-120b":     "openai/gpt-oss-20b",
+    "qwen/qwen3.6-27b":        "openai/gpt-oss-20b",
+    "groq/compound":           "groq/compound-mini",
+    # Legacy names kept for compatibility
+    "llama-3.3-70b-versatile": "openai/gpt-oss-20b",
+    "llama-3.1-70b-versatile": "openai/gpt-oss-20b",
+    "gpt-4o":                  "openai/gpt-oss-20b",
+    "gemini-1.5-pro":          "openai/gpt-oss-20b",
 }
+
 
 def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> Tuple[float, float, float]:
     """
@@ -87,13 +75,12 @@ def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> Tu
     Returns: (input_cost_usd, output_cost_usd, total_cost_usd)
     """
     pricing = MODEL_PRICING.get(model.lower(), MODEL_PRICING["default"])
-    
-    input_cost = (prompt_tokens / 1_000_000.0) * pricing["input_per_million"]
+    input_cost  = (prompt_tokens  / 1_000_000.0) * pricing["input_per_million"]
     output_cost = (completion_tokens / 1_000_000.0) * pricing["output_per_million"]
-    total_cost = input_cost + output_cost
-    
+    total_cost  = input_cost + output_cost
     return round(input_cost, 8), round(output_cost, 8), round(total_cost, 8)
+
 
 def get_cheaper_model(current_model: str) -> str:
     """Returns the cost-optimized fallback model for a given heavy model."""
-    return MODEL_SUBSTITUTION_MAP.get(current_model.lower(), "llama-3.1-8b-instant")
+    return MODEL_SUBSTITUTION_MAP.get(current_model.lower(), "openai/gpt-oss-20b")

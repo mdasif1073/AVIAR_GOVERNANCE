@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", "")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", "")
 
-    # Default Models
-    DEFAULT_PRIMARY_MODEL: str = "llama-3.3-70b-versatile"
-    DEFAULT_FALLBACK_MODEL: str = "llama-3.1-8b-instant"
+    # Default Models (verified available on this Groq account)
+    DEFAULT_PRIMARY_MODEL: str = "openai/gpt-oss-120b"
+    DEFAULT_FALLBACK_MODEL: str = "openai/gpt-oss-20b"
 
     # AWS / DynamoDB Configuration
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
