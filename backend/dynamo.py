@@ -8,6 +8,17 @@ from typing import Dict, Any, List, Optional
 from backend.config import settings
 
 
+def _sanitize_for_dynamodb(obj):
+    import decimal
+    if isinstance(obj, float):
+        return decimal.Decimal(str(round(obj, 8)))
+    elif isinstance(obj, dict):
+        return {k: _sanitize_for_dynamodb(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_sanitize_for_dynamodb(x) for x in obj]
+    return obj
+
+
 class DynamoStateStore:
     """
     Production-grade AWS DynamoDB State Store for AIVAR Budget Controller.
@@ -284,6 +295,9 @@ class DynamoStateStore:
                     "limit_usd": float(limit_usd), "current_spend_usd": 0.0,
                     "status": "OPEN", "created_at": time.time(), "updated_at": time.time(),
                 }
+            else:
+                if limit_usd != 2.0:
+                    self._sessions[session_id]["limit_usd"] = float(limit_usd)
             return self._sessions[session_id]
 
     def get_session(self, session_id: str) -> Optional[Dict]:
@@ -412,9 +426,11 @@ class DynamoStateStore:
         }
         if self.use_dynamodb:
             try:
-                self._tables[self.TABLE_ALERTS].put_item(Item={
+                db_item = _sanitize_for_dynamodb({
                     **record, "timestamp": str(time.time())
                 })
+                self._tables[self.TABLE_ALERTS].put_item(Item=db_item)
+                logger.info(f"DynamoDB saved alert {alert_id} for agent {agent_id}")
             except Exception as e:
                 logger.warning(f"DynamoDB put alert failed: {e}")
         with self._lock:

@@ -64,6 +64,7 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = 512
     agent_id: Optional[str] = Field(default="agent-support-01", description="Agent ID for spend governance")
     session_id: Optional[str] = Field(default=None, description="Optional Session ID for session-level limits")
+    session_limit_usd: Optional[float] = Field(default=None, description="Optional per-session budget limit in USD")
     allow_model_substitution: Optional[bool] = Field(default=True, description="Enable automatic fallback to cheaper model")
 
 class ConfigureAgentBudgetRequest(BaseModel):
@@ -119,7 +120,8 @@ async def governed_chat_completions(
         agent_id=agent_id,
         session_id=session_id,
         requested_model=requested_model,
-        allow_substitution=req.allow_model_substitution
+        allow_substitution=req.allow_model_substitution,
+        session_limit_usd=req.session_limit_usd
     )
 
     if not pre_eval["allowed"]:

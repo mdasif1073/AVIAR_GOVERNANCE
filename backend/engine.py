@@ -17,7 +17,8 @@ class GovernanceEngine:
         agent_id: str,
         session_id: Optional[str],
         requested_model: str,
-        allow_substitution: bool = True
+        allow_substitution: bool = True,
+        session_limit_usd: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Pre-flight check before calling LLM.
@@ -54,26 +55,26 @@ class GovernanceEngine:
 
         # 2. Check Session Limit
         if session_id:
-            session = store.get_or_create_session(session_id, agent_id)
-            if session.get("status") == "CLOSED":
-                return {
-                    "allowed": False,
-                    "reason": "SESSION_CLOSED",
-                    "message": f"Session '{session_id}' has reached its budget limit (${session['limit_usd']:.2f}) and is closed.",
-                    "disposition": "BLOCKED"
-                }
-            if session.get("current_spend_usd", 0.0) >= session.get("limit_usd", 2.0):
+            lim = session_limit_usd if session_limit_usd is not None else 2.0
+            session = store.get_or_create_session(session_id, agent_id, limit_usd=lim)
+            if session_limit_usd is not None and session.get("limit_usd") != session_limit_usd:
+                session["limit_usd"] = float(session_limit_usd)
+
+            sess_spend = float(session.get("current_spend_usd", 0.0))
+            sess_limit = float(session.get("limit_usd", 2.0))
+
+            if session.get("status") == "CLOSED" or sess_spend >= sess_limit:
                 store.close_session(session_id)
                 store.record_alert(
                     agent_id=agent_id,
                     alert_type="SESSION_CLOSED",
-                    message=f"Session {session_id} spend (${session['current_spend_usd']:.4f}) reached limit (${session['limit_usd']:.2f}). Session closed.",
-                    metadata={"session_id": session_id, "spend": session["current_spend_usd"]}
+                    message=f"Session '{session_id}' spend (${sess_spend:.6f}) reached limit (${sess_limit:.6f}). Session closed.",
+                    metadata={"session_id": session_id, "spend": sess_spend, "limit": sess_limit}
                 )
                 return {
                     "allowed": False,
                     "reason": "SESSION_BUDGET_EXHAUSTED",
-                    "message": f"Session budget of ${session['limit_usd']:.2f} exhausted.",
+                    "message": f"Session budget of ${sess_limit:.6f} exhausted.",
                     "disposition": "BLOCKED"
                 }
 
