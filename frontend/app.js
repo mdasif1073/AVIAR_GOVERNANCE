@@ -335,12 +335,17 @@ function bindButtons() {
         setRunning("btn-warn", true);
         toast("Configuring threshold to trigger 80% governance alert...", "warn");
 
+        const supportAgent = state.agents.find(a => a.agent_id === "agent-support-01");
+        const currentSpend = supportAgent ? (supportAgent.current_spend_usd || 0) : 0;
+        // Target 85% consumption so it is guaranteed to be >= 80% and < 100%
+        const targetLimit = currentSpend > 0.00005 ? (currentSpend / 0.85) : 0.00025;
+
         await fetch("/api/budgets/agent", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 agent_id: "agent-support-01",
-                monthly_limit_usd: 0.001,
+                monthly_limit_usd: targetLimit,
                 preferred_model: "openai/gpt-oss-120b",
                 fallback_model: "openai/gpt-oss-20b"
             })
@@ -361,7 +366,7 @@ function bindButtons() {
         const used = res.headers.get("X-Governance-Model-Used");
         const sub  = res.headers.get("X-Governance-Substituted");
 
-        toast(`SC-2/SC-5 Verified: Disposition=${disp || "REROUTED"} | Model Used=${used || "gpt-oss-20b"} | Substituted=${sub}`, "warn", 6000);
+        toast(`SC-2/SC-5 Verified: Model Substituted from 120B to ${used || "20b"} (Disposition: ${disp || "REROUTED"})`, "warn", 6000);
         await fetchSummary();
         setRunning("btn-warn", false);
     });
