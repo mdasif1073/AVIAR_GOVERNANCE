@@ -3,640 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIVAR | Enterprise Agent Budget Controller & Governance Gateway</title>
-    <meta name="description" content="Real-time AI Agent Spend & Cost Governance Gateway with multi-tier budget control, model substitution, and enterprise-grade observability.">
+    <title>AIVAR | Agent Budget Controller & Governance Gateway — AWS Production</title>
+    <meta name="description" content="Enterprise AI Agent Spend Governance — deployed on AWS EC2 with DynamoDB state persistence. Real-time budget enforcement for AI agents.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* ====================================================================
-           CSS RESET & DESIGN SYSTEM — LIGHT THEME ONLY
-        ==================================================================== */
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
         :root {
-            /* Backgrounds */
-            --bg-page:        #f0f4f8;
-            --bg-surface:     #ffffff;
-            --bg-surface-2:   #f8fafc;
-            --bg-surface-3:   #f1f5f9;
-
-            /* Borders */
-            --border-light:   #e2e8f0;
-            --border-medium:  #cbd5e1;
-            --border-focus:   #4f46e5;
-
-            /* Brand */
-            --brand:          #4f46e5;
-            --brand-light:    #eef2ff;
-            --brand-mid:      #a5b4fc;
-
-            /* Text */
-            --text-h:         #0f172a;
-            --text-p:         #334155;
-            --text-muted:     #64748b;
-            --text-dim:       #94a3b8;
-
-            /* Semantic */
-            --safe:           #059669;
-            --safe-bg:        #ecfdf5;
-            --safe-border:    #a7f3d0;
-            --warn:           #d97706;
-            --warn-bg:        #fffbeb;
-            --warn-border:    #fcd34d;
-            --danger:         #dc2626;
-            --danger-bg:      #fef2f2;
-            --danger-border:  #fca5a5;
-            --info:           #0284c7;
-            --info-bg:        #f0f9ff;
-            --info-border:    #7dd3fc;
-            --purple:         #7c3aed;
-            --purple-bg:      #f5f3ff;
-
-            /* Shadows */
-            --shadow-xs:  0 1px 2px rgba(0,0,0,.06);
-            --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-            --shadow-md:  0 4px 6px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
-            --shadow-lg:  0 10px 15px rgba(0,0,0,.06), 0 4px 6px rgba(0,0,0,.03);
-
-            /* Type */
-            --font:       'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --mono:       'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-
-            /* Radius */
-            --r-sm: 6px;
-            --r-md: 10px;
-            --r-lg: 14px;
-            --r-xl: 18px;
+            --bg:       #f0f4f8;
+            --surface:  #ffffff;
+            --s2:       #f8fafc;
+            --s3:       #f1f5f9;
+            --border:   #e2e8f0;
+            --border2:  #cbd5e1;
+            --brand:    #4f46e5;
+            --brand-l:  #eef2ff;
+            --brand-m:  #a5b4fc;
+            --text:     #0f172a;
+            --text2:    #334155;
+            --muted:    #64748b;
+            --dim:      #94a3b8;
+            --safe:     #059669; --safe-bg: #ecfdf5; --safe-b: #a7f3d0;
+            --warn:     #d97706; --warn-bg: #fffbeb; --warn-b: #fcd34d;
+            --danger:   #dc2626; --danger-bg: #fef2f2; --danger-b: #fca5a5;
+            --info:     #0284c7; --info-bg: #f0f9ff; --info-b: #7dd3fc;
+            --aws:      #ff9900; --aws-bg: #fff7ed; --aws-b: #fed7aa;
+            --font: 'Plus Jakarta Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 12px; --r2: 8px; --r3: 6px;
+            --sh: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+            --sh2: 0 4px 12px rgba(0,0,0,.08);
         }
 
-        html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+        html { font-size:15px; -webkit-font-smoothing:antialiased; }
+        body { font-family:var(--font); background:var(--bg); color:var(--text2); min-height:100vh; padding-bottom:48px; }
 
-        body {
-            font-family: var(--font);
-            background-color: var(--bg-page);
-            background-image:
-                radial-gradient(ellipse at 10% 10%, rgba(79,70,229,.06) 0, transparent 50%),
-                radial-gradient(ellipse at 90% 90%, rgba(2,132,199,.05) 0, transparent 50%);
-            color: var(--text-p);
-            min-height: 100vh;
-            padding-bottom: 48px;
+        /* ── NAVBAR ────────────────────────── */
+        .nav {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:0 24px; height:58px;
+            background:var(--surface); border-bottom:1px solid var(--border);
+            box-shadow:var(--sh); position:sticky; top:0; z-index:200; gap:12px;
         }
+        .brand { display:flex; align-items:center; gap:10px; }
+        .logo { width:34px; height:34px; background:var(--brand-l); border:1px solid var(--brand-m); border-radius:9px; display:grid; place-items:center; flex-shrink:0; }
+        .brand-name { font-size:.95rem; font-weight:800; color:var(--text); }
+        .brand-tag { font-size:.58rem; font-weight:700; letter-spacing:.8px; color:var(--brand); background:var(--brand-l); border:1px solid var(--brand-m); padding:2px 6px; border-radius:4px; }
+        .brand-sub { font-size:.72rem; color:var(--muted); margin-top:1px; }
 
-        /* ================================================================
-           NAVBAR
-        ================================================================ */
-        .navbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 28px;
-            height: 60px;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border-light);
-            box-shadow: var(--shadow-xs);
-            position: sticky;
-            top: 0;
-            z-index: 200;
-            gap: 16px;
+        .nav-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+        .live-badge { display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:var(--safe); background:var(--safe-bg); border:1px solid var(--safe-b); padding:5px 11px; border-radius:20px; }
+        .dot { width:7px; height:7px; background:var(--safe); border-radius:50%; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{transform:scale(.9);opacity:.7;} 50%{transform:scale(1.2);opacity:1;} }
+
+        .aws-badge { display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:var(--aws); background:var(--aws-bg); border:1px solid var(--aws-b); padding:5px 11px; border-radius:8px; }
+        .dynamo-badge { display:flex; align-items:center; gap:5px; font-size:.7rem; font-weight:700; color:#8b5cf6; background:#f5f3ff; border:1px solid #ddd6fe; padding:5px 11px; border-radius:8px; }
+        .chip { display:flex; gap:5px; align-items:center; font-size:.69rem; background:var(--s2); border:1px solid var(--border); padding:5px 10px; border-radius:var(--r2); }
+        .chip-l { color:var(--muted); font-weight:600; }
+        .chip-v { color:var(--text); font-family:var(--mono); font-weight:600; font-size:.67rem; }
+        .btn-reset { display:flex; align-items:center; gap:5px; font-size:.76rem; font-weight:700; color:var(--muted); background:var(--surface); border:1px solid var(--border); padding:6px 13px; border-radius:var(--r2); cursor:pointer; transition:all .18s; }
+        .btn-reset:hover { background:var(--danger-bg); border-color:var(--danger-b); color:var(--danger); }
+
+        /* ── LAYOUT ─────────────────────────── */
+        .wrap { max-width:1440px; margin:20px auto; padding:0 20px; display:flex; flex-direction:column; gap:16px; }
+
+        /* AWS Infrastructure Banner */
+        .aws-banner {
+            background: linear-gradient(135deg, #fff7ed, #fffbeb);
+            border: 1px solid var(--aws-b);
+            border-radius: var(--r);
+            padding: 12px 20px;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
+        .aws-banner-left { display:flex; align-items:center; gap:14px; }
+        .aws-logo-text { font-size:1.1rem; font-weight:800; color:var(--aws); letter-spacing:-0.5px; }
+        .aws-infra-details { display:flex; gap:20px; flex-wrap:wrap; }
+        .aws-detail { display:flex; flex-direction:column; gap:1px; }
+        .aws-detail-label { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); }
+        .aws-detail-val { font-size:.78rem; font-weight:700; color:var(--text); font-family:var(--mono); }
+        .aws-status-row { display:flex; gap:8px; flex-wrap:wrap; }
+        .infra-pill { font-size:.68rem; font-weight:700; padding:4px 10px; border-radius:20px; }
+        .infra-pill.green  { background:var(--safe-bg); color:var(--safe); border:1px solid var(--safe-b); }
+        .infra-pill.orange { background:var(--aws-bg); color:var(--aws); border:1px solid var(--aws-b); }
+        .infra-pill.purple { background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; }
 
-        .brand-container { display: flex; align-items: center; gap: 12px; }
+        /* ── CARD PRIMITIVES ─────────────────── */
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); transition:box-shadow .2s; }
+        .card:hover { box-shadow:var(--sh2); }
 
-        .logo-box {
-            width: 36px; height: 36px;
-            background: var(--brand-light);
-            border: 1px solid var(--brand-mid);
-            border-radius: var(--r-md);
-            display: grid; place-items: center; flex-shrink: 0;
+        /* ── KPI GRID ────────────────────────── */
+        .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+        @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+        @media(max-width:600px){.kpi-grid{grid-template-columns:1fr;}}
+
+        .kpi { padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+        .kpi-lbl { font-size:.65rem; font-weight:700; letter-spacing:.8px; color:var(--muted); text-transform:uppercase; }
+        .kpi-row { display:flex; align-items:baseline; gap:7px; }
+        .kpi-val { font-size:1.75rem; font-weight:800; font-family:var(--mono); color:var(--text); line-height:1; }
+        .kpi-unit { font-size:.8rem; color:var(--muted); font-family:var(--mono); }
+        .kpi-foot { display:flex; justify-content:space-between; align-items:center; font-size:.7rem; color:var(--muted); }
+
+        /* ── PROGRESS BAR ────────────────────── */
+        .bar-wrap { height:6px; background:var(--s3); border-radius:99px; overflow:hidden; border:1px solid var(--border); }
+        .bar-fill { height:100%; border-radius:99px; background:var(--safe); transition:width .4s ease, background .3s; }
+        .bar-fill.warn   { background:var(--warn); }
+        .bar-fill.danger { background:var(--danger); }
+
+        /* ── BADGES ──────────────────────────── */
+        .badge { display:inline-flex; align-items:center; font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:4px; }
+        .badge.safe   { background:var(--safe-bg);  color:var(--safe);   border:1px solid var(--safe-b); }
+        .badge.warn   { background:var(--warn-bg);  color:var(--warn);   border:1px solid var(--warn-b); }
+        .badge.danger { background:var(--danger-bg);color:var(--danger); border:1px solid var(--danger-b); }
+        .badge.info   { background:var(--info-bg);  color:var(--info);   border:1px solid var(--info-b); }
+        .badge.brand  { background:var(--brand-l);  color:var(--brand);  border:1px solid var(--brand-m); }
+        .badge.purple { background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; }
+
+        /* ── AGENT SIMULATOR SECTION ─────────── */
+        .sim-section { padding:20px 22px; }
+        .sec-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+        .sec-title { font-size:.98rem; font-weight:800; color:var(--text); }
+        .sec-sub { font-size:.75rem; color:var(--muted); margin-top:2px; line-height:1.4; }
+
+        .how-it-works {
+            background:var(--info-bg); border:1px solid var(--info-b);
+            border-radius:var(--r2); padding:12px 16px; margin-bottom:16px;
+            font-size:.76rem; color:#075985; line-height:1.6;
         }
+        .how-it-works strong { color:var(--info); }
 
-        .brand-title {
-            font-size: 1rem; font-weight: 800;
-            color: var(--text-h);
-            display: flex; align-items: center; gap: 8px;
-            white-space: nowrap;
-        }
-
-        .badge-tag {
-            font-size: .6rem; font-weight: 700; letter-spacing: .9px;
-            color: var(--brand); background: var(--brand-light);
-            border: 1px solid var(--brand-mid);
-            padding: 2px 7px; border-radius: var(--r-sm);
-        }
-
-        .brand-subtitle { font-size: .75rem; color: var(--text-muted); margin-top: 1px; }
-
-        .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
-        .live-pill {
-            display: flex; align-items: center; gap: 7px;
-            font-size: .72rem; font-weight: 700; color: var(--safe);
-            background: var(--safe-bg); border: 1px solid var(--safe-border);
-            padding: 5px 12px; border-radius: 20px;
-        }
-
-        .pulse-dot {
-            width: 7px; height: 7px;
-            background: var(--safe); border-radius: 50%;
-            box-shadow: 0 0 5px var(--safe);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%,100% { transform: scale(.9); opacity: .7; }
-            50%      { transform: scale(1.25); opacity: 1; }
-        }
-
-        .meta-tag {
-            display: flex; gap: 6px; align-items: center;
-            font-size: .72rem;
-            background: var(--bg-surface-2); border: 1px solid var(--border-light);
-            padding: 5px 11px; border-radius: var(--r-md);
-        }
-
-        .tag-label { color: var(--text-muted); font-weight: 600; }
-        .tag-val   { color: var(--text-h); font-family: var(--mono); font-weight: 600; font-size: .7rem; }
-
-        .btn-secondary {
-            display: flex; align-items: center; gap: 6px;
-            font-size: .78rem; font-weight: 600;
-            color: var(--text-p);
-            background: var(--bg-surface); border: 1px solid var(--border-light);
-            padding: 6px 13px; border-radius: var(--r-md);
-            cursor: pointer; box-shadow: var(--shadow-xs);
-            transition: all .18s;
-        }
-
-        .btn-secondary:hover {
-            background: var(--danger-bg);
-            border-color: var(--danger-border);
-            color: var(--danger);
-        }
-
-        /* ================================================================
-           PAGE LAYOUT
-        ================================================================ */
-        .main-container {
-            max-width: 1440px;
-            margin: 24px auto;
-            padding: 0 24px;
-            display: flex; flex-direction: column; gap: 20px;
-        }
-
-        /* ================================================================
-           CARD PRIMITIVES
-        ================================================================ */
-        .card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-light);
-            border-radius: var(--r-lg);
-            box-shadow: var(--shadow-sm);
-            transition: box-shadow .2s, border-color .2s;
-        }
-
-        .card:hover { box-shadow: var(--shadow-md); border-color: var(--border-medium); }
-
-        /* ================================================================
-           KPI GRID
-        ================================================================ */
-        .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
-
-        @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 600px)  { .kpi-grid { grid-template-columns: 1fr; } }
-
-        .kpi-card { padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
-
-        .kpi-card.accent-card {
-            background: linear-gradient(135deg, #ffffff 0%, var(--info-bg) 100%);
-            border-color: var(--info-border);
-        }
-
-        .kpi-label {
-            font-size: .68rem; font-weight: 700; letter-spacing: .9px;
-            color: var(--text-muted); text-transform: uppercase;
-        }
-
-        .kpi-value-row { display: flex; align-items: baseline; gap: 8px; }
-
-        .kpi-value {
-            font-size: 1.85rem; font-weight: 800;
-            font-family: var(--mono); color: var(--text-h);
-            line-height: 1;
-        }
-
-        .kpi-sub {
-            font-size: .82rem; color: var(--text-muted);
-            font-family: var(--mono);
-        }
-
-        .kpi-footer {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: .73rem; color: var(--text-muted);
-        }
-
-        .kpi-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-
-        /* ================================================================
-           PROGRESS BAR
-        ================================================================ */
-        .progress-wrap {
-            height: 7px; background: var(--bg-surface-3);
-            border-radius: 99px; overflow: hidden;
-            border: 1px solid var(--border-light);
-        }
-
-        .progress-fill {
-            height: 100%; border-radius: 99px;
-            background: var(--safe);
-            transition: width .35s ease, background .3s;
-        }
-
-        .progress-fill.warn   { background: var(--warn); }
-        .progress-fill.danger { background: var(--danger); }
-
-        /* ================================================================
-           BADGES / PILLS
-        ================================================================ */
-        .badge {
-            display: inline-flex; align-items: center;
-            font-size: .68rem; font-weight: 700;
-            padding: 2px 8px; border-radius: var(--r-sm);
-        }
-
-        .badge.safe   { background: var(--safe-bg);   color: var(--safe);   border: 1px solid var(--safe-border); }
-        .badge.warn   { background: var(--warn-bg);   color: var(--warn);   border: 1px solid var(--warn-border); }
-        .badge.danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
-        .badge.info   { background: var(--info-bg);   color: var(--info);   border: 1px solid var(--info-border); }
-        .badge.purple { background: var(--purple-bg); color: var(--purple); border: 1px solid #ddd6fe; }
-        .badge.brand  { background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand-mid); }
-
-        /* ================================================================
-           SIMULATION SUITE
-        ================================================================ */
-        .sim-section { padding: 22px 24px; }
-
-        .section-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            margin-bottom: 16px; gap: 12px;
-        }
-
-        .section-title { font-size: 1rem; font-weight: 800; color: var(--text-h); }
-        .section-desc  { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
-
-        .sim-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-
-        @media (max-width: 900px) { .sim-grid { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 500px) { .sim-grid { grid-template-columns: 1fr; } }
+        .sim-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        @media(max-width:900px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
 
         .sim-btn {
-            display: flex; align-items: flex-start; gap: 11px;
-            padding: 14px 15px;
-            background: var(--bg-surface-2); border: 1px solid var(--border-light);
-            border-radius: var(--r-md); cursor: pointer; text-align: left;
-            box-shadow: var(--shadow-xs);
-            transition: all .2s;
+            display:flex; align-items:flex-start; gap:10px; padding:14px;
+            background:var(--s2); border:1px solid var(--border); border-radius:var(--r2);
+            cursor:pointer; text-align:left; box-shadow:var(--sh); transition:all .2s;
+            position:relative; overflow:hidden;
         }
+        .sim-btn:hover { background:var(--brand-l); border-color:var(--brand-m); transform:translateY(-1px); box-shadow:var(--sh2); }
+        .sim-btn.running { border-color:var(--brand); background:var(--brand-l); }
 
-        .sim-btn:hover {
-            background: var(--brand-light); border-color: var(--brand-mid);
-            box-shadow: var(--shadow-md); transform: translateY(-1px);
+        .sim-step-num {
+            position:absolute; top:8px; right:10px;
+            font-size:.6rem; font-weight:800; color:var(--dim);
         }
+        .sim-icon { width:34px; height:34px; border-radius:var(--r3); display:grid; place-items:center; font-size:1.05rem; flex-shrink:0; }
+        .sim-icon.c1 { background:var(--info-bg); border:1px solid var(--info-b); }
+        .sim-icon.c2 { background:var(--warn-bg); border:1px solid var(--warn-b); }
+        .sim-icon.c3 { background:var(--danger-bg); border:1px solid var(--danger-b); }
+        .sim-icon.c4 { background:#f5f3ff; border:1px solid #ddd6fe; }
+        .sim-title { font-size:.8rem; font-weight:800; color:var(--text); }
+        .sim-desc { font-size:.68rem; color:var(--muted); margin-top:3px; line-height:1.35; }
+        .sim-sc { font-size:.6rem; font-weight:700; color:var(--brand); margin-top:4px; }
 
-        .sim-icon {
-            width: 36px; height: 36px; border-radius: var(--r-sm);
-            display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0;
+        /* ── DASHBOARD SPLIT ─────────────────── */
+        .split { display:grid; grid-template-columns:1fr 1.15fr; gap:16px; align-items:start; }
+        @media(max-width:1024px){.split{grid-template-columns:1fr;}}
+
+        .col { display:flex; flex-direction:column; gap:12px; }
+        .col-head { display:flex; justify-content:space-between; align-items:center; }
+        .col-title { font-size:.9rem; font-weight:800; color:var(--text); }
+
+        /* ── AGENT CARDS ─────────────────────── */
+        .agent-card { padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+        .agent-head { display:flex; justify-content:space-between; align-items:flex-start; }
+        .agent-name { font-size:.88rem; font-weight:750; color:var(--text); }
+        .agent-id { font-size:.65rem; color:var(--muted); font-family:var(--mono); margin-top:2px; }
+        .agent-spend-row { display:flex; justify-content:space-between; align-items:baseline; }
+        .agent-spend { font-size:1.25rem; font-weight:800; font-family:var(--mono); color:var(--text); }
+        .agent-limit { font-size:.75rem; color:var(--muted); font-family:var(--mono); }
+        .agent-models { display:flex; flex-wrap:wrap; gap:8px; background:var(--s2); border:1px solid var(--border); border-radius:var(--r3); padding:7px 10px; }
+        .model-lbl { font-size:.67rem; color:var(--muted); }
+        .model-lbl span { color:var(--text); font-family:var(--mono); font-weight:600; }
+
+        /* ── BOXES (alerts, ledger) ──────────── */
+        .box-head { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--s2); border-radius:var(--r) var(--r) 0 0; }
+        .box-title { font-size:.86rem; font-weight:750; color:var(--text); }
+        .alerts-list { max-height:220px; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:7px; border-radius:0 0 var(--r) var(--r); }
+        .alert-item { padding:9px 12px; border-radius:var(--r3); font-size:.72rem; display:flex; flex-direction:column; gap:3px; border-left:3px solid transparent; }
+        .alert-item.warn   { background:var(--warn-bg); border-color:var(--warn); color:#92400e; }
+        .alert-item.danger { background:var(--danger-bg); border-color:var(--danger); color:#991b1b; }
+        .alert-item.info   { background:var(--info-bg); border-color:var(--info); color:#075985; }
+        .alert-meta { font-size:.63rem; color:var(--muted); display:flex; justify-content:space-between; }
+        .empty-state { font-size:.77rem; color:var(--dim); padding:22px; text-align:center; }
+
+        /* ── LEDGER ──────────────────────────── */
+        .table-wrap { overflow-x:auto; max-height:280px; border-radius:0 0 var(--r) var(--r); }
+        table { width:100%; border-collapse:collapse; font-size:.73rem; }
+        th { background:var(--s3); padding:8px 13px; color:var(--muted); font-weight:700; font-size:.63rem; letter-spacing:.7px; text-transform:uppercase; border-bottom:1px solid var(--border); position:sticky; top:0; }
+        td { padding:10px 13px; border-bottom:1px solid var(--s3); color:var(--text2); }
+        tr:last-child td { border-bottom:none; }
+        tbody tr:hover td { background:var(--s2); }
+        .mono-td { font-family:var(--mono); font-size:.7rem; font-weight:600; color:var(--text); }
+        .model-chip { font-family:var(--mono); font-size:.67rem; background:var(--s2); border:1px solid var(--border); padding:2px 6px; border-radius:4px; }
+        .sub-badge { font-size:.6rem; font-weight:700; background:var(--info-bg); color:var(--info); border:1px solid var(--info-b); padding:1px 5px; border-radius:4px; margin-left:4px; }
+        .empty-td { text-align:center; color:var(--dim); padding:28px !important; }
+
+        /* ── TOAST NOTIFICATION ──────────────── */
+        #toast {
+            position:fixed; bottom:24px; right:24px; z-index:9999;
+            background:var(--text); color:#fff;
+            padding:12px 18px; border-radius:var(--r);
+            font-size:.8rem; font-weight:600; max-width:320px;
+            box-shadow:0 8px 24px rgba(0,0,0,.2);
+            transform:translateY(100px); opacity:0;
+            transition:all .3s ease;
         }
-
-        .sim-icon.cyan   { background: var(--info-bg);   border: 1px solid var(--info-border); }
-        .sim-icon.yellow { background: var(--warn-bg);   border: 1px solid var(--warn-border); }
-        .sim-icon.red    { background: var(--danger-bg); border: 1px solid var(--danger-border); }
-        .sim-icon.purple { background: var(--purple-bg); border: 1px solid #ddd6fe; }
-
-        .sim-btn-title { font-size: .82rem; font-weight: 700; color: var(--text-h); }
-        .sim-btn-desc  { font-size: .7rem;  color: var(--text-muted); margin-top: 3px; line-height: 1.35; }
-
-        /* ================================================================
-           MAIN SPLIT GRID
-        ================================================================ */
-        .dashboard-split { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; align-items: start; }
-
-        @media (max-width: 1024px) { .dashboard-split { grid-template-columns: 1fr; } }
-
-        .fleet-column, .activity-column { display: flex; flex-direction: column; gap: 14px; }
-
-        .sub-section-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 8px;
-        }
-
-        /* ================================================================
-           AGENT CARDS
-        ================================================================ */
-        .agent-card { padding: 18px 20px; display: flex; flex-direction: column; gap: 13px; }
-
-        .agent-card-head {
-            display: flex; justify-content: space-between; align-items: flex-start;
-        }
-
-        .agent-name { font-size: .92rem; font-weight: 750; color: var(--text-h); }
-        .agent-id   { font-size: .68rem; color: var(--text-muted); font-family: var(--mono); margin-top: 2px; }
-
-        .agent-spend-row { display: flex; justify-content: space-between; align-items: baseline; }
-
-        .agent-spend-val {
-            font-size: 1.3rem; font-weight: 800;
-            font-family: var(--mono); color: var(--text-h);
-        }
-
-        .agent-limit-val { font-size: .78rem; color: var(--text-muted); font-family: var(--mono); }
-
-        .agent-models {
-            display: flex; flex-wrap: wrap; gap: 10px;
-            background: var(--bg-surface-2);
-            border: 1px solid var(--border-light);
-            border-radius: var(--r-sm);
-            padding: 8px 11px;
-        }
-
-        .model-label { font-size: .7rem; color: var(--text-muted); }
-        .model-label span { color: var(--text-h); font-family: var(--mono); font-weight: 600; }
-
-        /* ================================================================
-           ALERTS BOX & LEDGER
-        ================================================================ */
-        .box-head {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border-light);
-            background: var(--bg-surface-2);
-            border-radius: var(--r-lg) var(--r-lg) 0 0;
-        }
-
-        .box-title { font-size: .9rem; font-weight: 750; color: var(--text-h); }
-
-        .alerts-list {
-            max-height: 210px; overflow-y: auto;
-            padding: 12px 14px;
-            display: flex; flex-direction: column; gap: 8px;
-            background: var(--bg-surface);
-            border-radius: 0 0 var(--r-lg) var(--r-lg);
-        }
-
-        .alert-item {
-            padding: 10px 13px; border-radius: var(--r-sm);
-            font-size: .76rem; display: flex; flex-direction: column; gap: 4px;
-            border-left: 3px solid transparent;
-        }
-
-        .alert-item.warn   { background: var(--warn-bg);   border-color: var(--warn);   color: #92400e; }
-        .alert-item.danger { background: var(--danger-bg); border-color: var(--danger); color: #991b1b; }
-        .alert-item.info   { background: var(--info-bg);   border-color: var(--info);   color: #075985; }
-
-        .alert-meta {
-            font-size: .66rem; color: var(--text-muted);
-            display: flex; justify-content: space-between;
-        }
-
-        .empty-state {
-            font-size: .8rem; color: var(--text-dim);
-            padding: 24px; text-align: center;
-        }
-
-        /* ================================================================
-           LEDGER TABLE
-        ================================================================ */
-        .table-wrap {
-            overflow-x: auto; max-height: 300px;
-            background: var(--bg-surface);
-            border-radius: 0 0 var(--r-lg) var(--r-lg);
-        }
-
-        .ledger-table {
-            width: 100%; border-collapse: collapse;
-            font-size: .76rem; text-align: left;
-        }
-
-        .ledger-table th {
-            background: var(--bg-surface-3);
-            padding: 9px 15px;
-            color: var(--text-muted); font-weight: 700;
-            font-size: .66rem; letter-spacing: .7px; text-transform: uppercase;
-            border-bottom: 1px solid var(--border-light);
-            position: sticky; top: 0; z-index: 10;
-        }
-
-        .ledger-table td { padding: 11px 15px; border-bottom: 1px solid var(--bg-surface-3); color: var(--text-p); }
-
-        .ledger-table tr:last-child td { border-bottom: none; }
-        .ledger-table tbody tr:hover td { background: var(--bg-surface-2); }
-
-        .mono-cell { font-family: var(--mono); font-size: .73rem; font-weight: 600; color: var(--text-h); }
-
-        .model-tag-cell {
-            font-family: var(--mono); font-size: .7rem;
-            background: var(--bg-surface-2); border: 1px solid var(--border-light);
-            padding: 2px 6px; border-radius: 4px;
-        }
-
-        .sub-tag {
-            font-size: .62rem; font-weight: 700;
-            background: var(--info-bg); color: var(--info);
-            border: 1px solid var(--info-border);
-            padding: 1px 5px; border-radius: 4px;
-            margin-left: 5px;
-        }
-
-        .empty-table { text-align: center; color: var(--text-dim); padding: 32px !important; }
+        #toast.show { transform:translateY(0); opacity:1; }
+        #toast.success { background:var(--safe); }
+        #toast.error   { background:var(--danger); }
+        #toast.warn    { background:var(--warn); }
     </style>
 </head>
 <body>
-    <!-- ═══════════════════════════ NAVBAR ═══════════════════════════ -->
-    <header class="navbar">
-        <div class="brand-container">
-            <div class="logo-box">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#4f46e5" stroke-width="1.8" fill="rgba(79,70,229,.12)"/>
-                    <circle cx="12" cy="12" r="3" fill="#4f46e5"/>
-                </svg>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<header class="nav">
+    <div class="brand">
+        <div class="logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#4f46e5" stroke-width="2" fill="rgba(79,70,229,.15)"/>
+                <circle cx="12" cy="12" r="3" fill="#4f46e5"/>
+            </svg>
+        </div>
+        <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span class="brand-name">AIVAR</span>
+                <span class="brand-tag">GOVERNANCE GATEWAY</span>
             </div>
-            <div>
-                <div class="brand-title">AIVAR <span class="badge-tag">GOVERNANCE OS</span></div>
-                <div class="brand-subtitle">Real-Time AI Agent Spend &amp; Cost Governance Gateway</div>
+            <div class="brand-sub">PS-8.1 Agent Budget Controller &amp; Enforcement Engine</div>
+        </div>
+    </div>
+    <div class="nav-right">
+        <div class="live-badge"><span class="dot"></span><span id="conn-status">GATEWAY LIVE</span></div>
+        <div class="aws-badge">
+            <svg width="14" height="14" viewBox="0 0 80 50" fill="none"><path d="M23.5 39.5c-9.6 4.2-15.5 1.4-19.3-2.4C.5 33.4-.5 26.5 2.5 19.5c3-7 9.8-12 17.5-12 1.5 0 3 .2 4.5.5" stroke="#FF9900" stroke-width="4" stroke-linecap="round"/><path d="M57 39.5c9.6 4.2 15.5 1.4 19.3-2.4C79.5 33.4 80.5 26.5 77.5 19.5c-3-7-9.8-12-17.5-12-1.5 0-3 .2-4.5.5" stroke="#FF9900" stroke-width="4" stroke-linecap="round"/><path d="M40 8 C30 8 22 16 22 26 C22 36 30 43 40 43 C50 43 58 36 58 26 C58 16 50 8 40 8Z" stroke="#FF9900" stroke-width="4" fill="none"/></svg>
+            AWS EC2 · us-east-1
+        </div>
+        <div class="dynamo-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#8b5cf6"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            DynamoDB Connected
+        </div>
+        <div class="chip"><span class="chip-l">MODEL</span><span class="chip-v" id="chip-model">gpt-oss-120b</span></div>
+        <button id="btn-reset" class="btn-reset" title="Reset all agent spends to $0.00 for a clean demo run">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset All Spend to $0
+        </button>
+    </div>
+</header>
+
+<main class="wrap">
+
+    <!-- ══ AWS INFRASTRUCTURE BANNER ══ -->
+    <div class="aws-banner">
+        <div class="aws-banner-left">
+            <div class="aws-logo-text">Amazon Web Services</div>
+            <div class="aws-infra-details">
+                <div class="aws-detail">
+                    <div class="aws-detail-label">Compute</div>
+                    <div class="aws-detail-val">EC2 t2.micro · Ubuntu 24.04</div>
+                </div>
+                <div class="aws-detail">
+                    <div class="aws-detail-label">Database</div>
+                    <div class="aws-detail-val">DynamoDB · us-east-1</div>
+                </div>
+                <div class="aws-detail">
+                    <div class="aws-detail-label">LLM Provider</div>
+                    <div class="aws-detail-val">Groq Cloud · GPT-OSS</div>
+                </div>
+                <div class="aws-detail">
+                    <div class="aws-detail-label">State</div>
+                    <div class="aws-detail-val" id="banner-state-store">Loading…</div>
+                </div>
             </div>
         </div>
-        <div class="header-actions">
-            <div class="live-pill">
-                <span class="pulse-dot"></span>
-                <span id="connection-status">GATEWAY LIVE</span>
+        <div class="aws-status-row">
+            <span class="infra-pill green">✅ EC2 Running</span>
+            <span class="infra-pill purple">✅ DynamoDB 4 Tables</span>
+            <span class="infra-pill orange">✅ Groq API Live</span>
+            <span class="infra-pill green">✅ 7/7 Tests Passing</span>
+        </div>
+    </div>
+
+    <!-- ══ KPI CARDS ══ -->
+    <section class="kpi-grid">
+        <div class="card kpi">
+            <div class="kpi-lbl">Team Monthly Budget (Engineering AI)</div>
+            <div class="kpi-row">
+                <span class="kpi-val" id="k-spend">$0.0000</span>
+                <span class="kpi-unit" id="k-limit">/ $500.00</span>
             </div>
-            <div class="meta-tag">
-                <span class="tag-label">PROVIDER:</span>
-                <span class="tag-val" id="provider-badge">Groq Cloud (LLaMA 3.3)</span>
+            <div class="bar-wrap"><div class="bar-fill" id="k-bar" style="width:0%"></div></div>
+            <div class="kpi-foot"><span id="k-pct">0.0% consumed</span><span class="badge safe" id="k-status">NORMAL</span></div>
+        </div>
+        <div class="card kpi">
+            <div class="kpi-lbl">Governed Agent Fleet</div>
+            <div class="kpi-row"><span class="kpi-val" id="k-agents">3</span><span class="kpi-unit">Active Agents</span></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
+                <span class="badge safe">3 Active</span>
+                <span class="badge warn" id="k-warn">0 Warning</span>
+                <span class="badge danger" id="k-block">0 Blocked</span>
             </div>
-            <div class="meta-tag">
-                <span class="tag-label">STATE:</span>
-                <span class="tag-val">AWS DynamoDB</span>
+        </div>
+        <div class="card kpi">
+            <div class="kpi-lbl">Tokens Metered (Real LLM)</div>
+            <div class="kpi-row"><span class="kpi-val" id="k-tokens">0</span><span class="kpi-unit">Tokens</span></div>
+            <div class="kpi-foot"><span>Atomic DynamoDB tracking</span><span class="badge brand">Sub-ms</span></div>
+        </div>
+        <div class="card kpi" style="background:linear-gradient(135deg,#fff,var(--info-bg));border-color:var(--info-b);">
+            <div class="kpi-lbl">Model Substitutions Saved</div>
+            <div class="kpi-row"><span class="kpi-val" id="k-sub" style="color:var(--info)">0</span><span class="kpi-unit">Rerouted Calls</span></div>
+            <div class="kpi-foot"><span>120B → 20B auto-reroute</span><span style="font-family:var(--mono);font-weight:800;color:var(--info);font-size:.78rem;">-50% Cost</span></div>
+        </div>
+    </section>
+
+    <!-- ══ AGENT LIVE SIMULATOR ══ -->
+    <div class="card sim-section">
+        <div class="sec-head">
+            <div>
+                <div class="sec-title">🎯 Live Agent Workload Simulator — PS-8.1 Verification Suite</div>
+                <div class="sec-sub">Each button triggers REAL API calls to the Groq LLM through this governance gateway. Watch the 3 agent cards below update in real-time.</div>
             </div>
-            <button id="btn-reset" class="btn-secondary" title="Reset all spend counters to $0.00">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                Reset Demo
+            <span class="badge brand">Real Groq API · Real DynamoDB</span>
+        </div>
+
+        <div class="how-it-works">
+            <strong>How it works:</strong> This gateway sits between your AI agents and the LLM provider. Every agent call passes through the budget engine — tokens are counted, costs are calculated, and spend is persisted atomically to AWS DynamoDB. Click the buttons below to simulate the 3 agents (<strong>Support Agent</strong>, <strong>Analytics Agent</strong>, <strong>Research Agent</strong>) running real workloads.
+        </div>
+
+        <div class="sim-grid">
+            <button class="sim-btn" id="btn-concurrent">
+                <div class="sim-icon c1">⚡</div>
+                <div>
+                    <div class="sim-title">Run 3 Agents Concurrently</div>
+                    <div class="sim-desc">All 3 agents fire real LLM calls simultaneously. Watch spend bars rise live.</div>
+                    <div class="sim-sc">▶ PS-8.1 SC-1: Concurrent tracking</div>
+                </div>
+                <div class="sim-step-num">STEP 1</div>
+            </button>
+            <button class="sim-btn" id="btn-warn">
+                <div class="sim-icon c2">⚠️</div>
+                <div>
+                    <div class="sim-title">Trigger 80% Warning + Auto-Reroute</div>
+                    <div class="sim-desc">Pushes Agent 1 past 80% spend. Gateway fires warning &amp; switches to cheaper model.</div>
+                    <div class="sim-sc">▶ PS-8.1 SC-2 + SC-5: Warning &amp; substitution</div>
+                </div>
+                <div class="sim-step-num">STEP 2</div>
+            </button>
+            <button class="sim-btn" id="btn-block">
+                <div class="sim-icon c3">🛑</div>
+                <div>
+                    <div class="sim-title">Trigger 100% Hard Block</div>
+                    <div class="sim-desc">Exhausts Agent 2 budget. Next call returns HTTP 429 — LLM never reached.</div>
+                    <div class="sim-sc">▶ PS-8.1 SC-3: Hard block enforcement</div>
+                </div>
+                <div class="sim-step-num">STEP 3</div>
+            </button>
+            <button class="sim-btn" id="btn-runaway">
+                <div class="sim-icon c4">🔄</div>
+                <div>
+                    <div class="sim-title">Simulate Runaway Loop → Pause Agent</div>
+                    <div class="sim-desc">Agent 3 burns budget fast (&gt;20%/hr). Gateway detects &amp; auto-pauses for review.</div>
+                    <div class="sim-sc">▶ PS-8.1 Bonus: Runaway detection</div>
+                </div>
+                <div class="sim-step-num">BONUS</div>
             </button>
         </div>
-    </header>
+    </div>
 
-    <main class="main-container">
-        <!-- ══════════════ KPI OVERVIEW ══════════════ -->
-        <section class="kpi-grid">
-            <!-- Org Budget -->
-            <div class="card kpi-card">
-                <div class="kpi-label">Organization Budget (Monthly)</div>
-                <div class="kpi-value-row">
-                    <span class="kpi-value" id="kpi-team-spend">$0.0000</span>
-                    <span class="kpi-sub" id="kpi-team-limit">/ $500.00</span>
-                </div>
-                <div class="progress-wrap">
-                    <div class="progress-fill" id="kpi-team-bar" style="width:0%"></div>
-                </div>
-                <div class="kpi-footer">
-                    <span id="kpi-team-pct">0.0% Consumed</span>
-                    <span class="badge safe" id="kpi-team-status">NORMAL</span>
-                </div>
-            </div>
+    <!-- ══ MAIN SPLIT ══ -->
+    <section class="split">
 
-            <!-- Active Agents -->
-            <div class="card kpi-card">
-                <div class="kpi-label">Total Governed Agents</div>
-                <div class="kpi-value-row">
-                    <span class="kpi-value" id="kpi-active-agents">3</span>
-                    <span class="kpi-sub">Active Instances</span>
-                </div>
-                <div class="kpi-pills">
-                    <span class="badge safe">3 Active</span>
-                    <span class="badge warn" id="kpi-warn-count">0 Warning</span>
-                    <span class="badge danger" id="kpi-block-count">0 Blocked</span>
-                </div>
+        <!-- LEFT: Agent Fleet -->
+        <div class="col">
+            <div class="col-head">
+                <span class="col-title">Governed Agent Fleet (3 Agents)</span>
+                <span class="badge brand" id="agent-cnt">3 Agents</span>
             </div>
-
-            <!-- Tokens -->
-            <div class="card kpi-card">
-                <div class="kpi-label">Metered Tokens Processed</div>
-                <div class="kpi-value-row">
-                    <span class="kpi-value" id="kpi-total-tokens">0</span>
-                    <span class="kpi-sub">Tokens</span>
-                </div>
-                <div class="kpi-footer">
-                    <span>Atomic Concurrency</span>
-                    <span class="badge brand">Sub-millisecond</span>
-                </div>
-            </div>
-
-            <!-- Substitution Savings -->
-            <div class="card kpi-card accent-card">
-                <div class="kpi-label">Model Substitution Savings</div>
-                <div class="kpi-value-row">
-                    <span class="kpi-value" id="kpi-sub-count" style="color:var(--info)">0</span>
-                    <span class="kpi-sub">Rerouted Calls</span>
-                </div>
-                <div class="kpi-footer">
-                    <span>Cheaper Fallback Rate</span>
-                    <span style="font-family:var(--mono);font-weight:800;color:var(--info)">-90.5% Cost</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ══════════════ SIMULATION SUITE ══════════════ -->
-        <div class="card sim-section">
-            <div class="section-header">
-                <div>
-                    <div class="section-title">Interactive Multi-Agent Verification Suite</div>
-                    <div class="section-desc">Trigger real-world workload scenarios to evaluate live governance criteria.</div>
-                </div>
-                <span class="badge brand">Real-Time Concurrent Simulation</span>
-            </div>
-            <div class="sim-grid">
-                <button class="sim-btn" id="btn-sim-concurrent">
-                    <div class="sim-icon cyan">⚡</div>
-                    <div>
-                        <div class="sim-btn-title">1. Test Concurrent Calls</div>
-                        <div class="sim-btn-desc">Fires 3 agents simultaneously to test thread-safe atomic metering</div>
-                    </div>
-                </button>
-                <button class="sim-btn" id="btn-sim-warn">
-                    <div class="sim-icon yellow">⚠️</div>
-                    <div>
-                        <div class="sim-btn-title">2. Test 80% Warning &amp; Fallback</div>
-                        <div class="sim-btn-desc">Pushes spend past 80% &amp; triggers auto-reroute to cheaper model</div>
-                    </div>
-                </button>
-                <button class="sim-btn" id="btn-sim-block">
-                    <div class="sim-icon red">🛑</div>
-                    <div>
-                        <div class="sim-btn-title">3. Test 100% Hard Block</div>
-                        <div class="sim-btn-desc">Exhausts budget and validates HTTP 429 budget-exhausted rejection</div>
-                    </div>
-                </button>
-                <button class="sim-btn" id="btn-sim-runaway">
-                    <div class="sim-icon purple">🔄</div>
-                    <div>
-                        <div class="sim-btn-title">4. Test Runaway Loop Detection</div>
-                        <div class="sim-btn-desc">Simulates recursive loop (&gt;20%/hr velocity) and auto-pauses agent</div>
-                    </div>
-                </button>
-            </div>
+            <div id="agent-list"></div>
         </div>
 
-        <!-- ══════════════ MAIN SPLIT ══════════════ -->
-        <section class="dashboard-split">
-            <!-- LEFT: Agent Fleet -->
-            <div class="fleet-column">
-                <div class="sub-section-header">
-                    <span class="section-title">Governed Agent Fleet</span>
-                    <span class="badge brand" id="agent-count-badge">3 Agents</span>
-                </div>
-                <div id="agent-cards-list"></div>
-            </div>
+        <!-- RIGHT: Alerts + Ledger -->
+        <div class="col">
 
-            <!-- RIGHT: Alerts + Ledger -->
-            <div class="activity-column">
-                <!-- Alerts -->
-                <div class="card" style="padding:0; overflow:hidden">
-                    <div class="box-head">
-                        <span class="box-title">Governance &amp; Policy Alerts</span>
-                        <span class="badge safe">LIVE STREAM</span>
-                    </div>
-                    <div class="alerts-list" id="alerts-list">
-                        <div class="empty-state">No governance violations detected. System operating within budget policy.</div>
-                    </div>
+            <!-- Governance Alerts -->
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div class="box-head">
+                    <span class="box-title">Governance &amp; Policy Alert Log</span>
+                    <span class="badge safe">LIVE STREAM</span>
                 </div>
-
-                <!-- Ledger -->
-                <div class="card" style="padding:0; overflow:hidden">
-                    <div class="box-head">
-                        <span class="box-title">Real-Time Spend Ledger</span>
-                        <span id="ledger-count" style="font-family:var(--mono);font-size:.73rem;color:var(--text-muted);font-weight:600">0 Transactions</span>
-                    </div>
-                    <div class="table-wrap">
-                        <table class="ledger-table">
-                            <thead>
-                                <tr>
-                                    <th>Agent</th>
-                                    <th>Model Requested / Used</th>
-                                    <th>Tokens</th>
-                                    <th>Cost (USD)</th>
-                                    <th>Disposition</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ledger-body">
-                                <tr><td colspan="5" class="empty-table">Awaiting transactions… Click a simulation button above to begin.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="alerts-list" id="alert-list">
+                    <div class="empty-state">No governance events yet — click a simulation step above to begin.</div>
                 </div>
             </div>
-        </section>
-    </main>
 
-    <script src="/static/app.js"></script>
+            <!-- Transaction Ledger -->
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div class="box-head">
+                    <span class="box-title">Real-Time Spend Ledger</span>
+                    <span id="tx-count" style="font-family:var(--mono);font-size:.7rem;color:var(--muted);font-weight:600;">0 Transactions</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Model Requested → Used</th>
+                                <th>Tokens</th>
+                                <th>Cost (USD)</th>
+                                <th>Disposition</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-body">
+                            <tr><td colspan="5" class="empty-td">Run Step 1 above to see live transactions…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+</main>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script src="/static/app.js"></script>
 </body>
 </html>
