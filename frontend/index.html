@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIVAR | Agent Budget Controller & Governance Gateway — AWS Production</title>
-    <meta name="description" content="Enterprise AI Agent Spend Governance — deployed on AWS EC2 with DynamoDB state persistence. Real-time budget enforcement for AI agents.">
+    <title>AIVAR | Agent Budget Controller &amp; Governance Gateway</title>
+    <meta name="description" content="Enterprise AI Agent Spend Governance — real-time budget enforcement for AI agents with live DynamoDB state persistence.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -54,13 +54,9 @@
         .brand-sub { font-size:.72rem; color:var(--muted); margin-top:1px; }
 
         .nav-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-
         .live-badge { display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:var(--safe); background:var(--safe-bg); border:1px solid var(--safe-b); padding:5px 11px; border-radius:20px; }
         .dot { width:7px; height:7px; background:var(--safe); border-radius:50%; animation:pulse 2s infinite; }
         @keyframes pulse { 0%,100%{transform:scale(.9);opacity:.7;} 50%{transform:scale(1.2);opacity:1;} }
-
-        .aws-badge { display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:var(--aws); background:var(--aws-bg); border:1px solid var(--aws-b); padding:5px 11px; border-radius:8px; }
-        .dynamo-badge { display:flex; align-items:center; gap:5px; font-size:.7rem; font-weight:700; color:#8b5cf6; background:#f5f3ff; border:1px solid #ddd6fe; padding:5px 11px; border-radius:8px; }
         .chip { display:flex; gap:5px; align-items:center; font-size:.69rem; background:var(--s2); border:1px solid var(--border); padding:5px 10px; border-radius:var(--r2); }
         .chip-l { color:var(--muted); font-weight:600; }
         .chip-v { color:var(--text); font-family:var(--mono); font-weight:600; font-size:.67rem; }
@@ -71,24 +67,7 @@
         .wrap { max-width:1440px; margin:20px auto; padding:0 20px; display:flex; flex-direction:column; gap:16px; }
 
         /* AWS Infrastructure Banner */
-        .aws-banner {
-            background: linear-gradient(135deg, #fff7ed, #fffbeb);
-            border: 1px solid var(--aws-b);
-            border-radius: var(--r);
-            padding: 12px 20px;
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-        }
-        .aws-banner-left { display:flex; align-items:center; gap:14px; }
-        .aws-logo-text { font-size:1.1rem; font-weight:800; color:var(--aws); letter-spacing:-0.5px; }
-        .aws-infra-details { display:flex; gap:20px; flex-wrap:wrap; }
-        .aws-detail { display:flex; flex-direction:column; gap:1px; }
-        .aws-detail-label { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); }
-        .aws-detail-val { font-size:.78rem; font-weight:700; color:var(--text); font-family:var(--mono); }
-        .aws-status-row { display:flex; gap:8px; flex-wrap:wrap; }
-        .infra-pill { font-size:.68rem; font-weight:700; padding:4px 10px; border-radius:20px; }
-        .infra-pill.green  { background:var(--safe-bg); color:var(--safe); border:1px solid var(--safe-b); }
-        .infra-pill.orange { background:var(--aws-bg); color:var(--aws); border:1px solid var(--aws-b); }
-        .infra-pill.purple { background:#f5f3ff; color:#7c3aed; border:1px solid #ddd6fe; }
+        /* aws-banner removed */
 
         /* ── CARD PRIMITIVES ─────────────────── */
         .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); transition:box-shadow .2s; }
@@ -239,16 +218,8 @@
     </div>
     <div class="nav-right">
         <div class="live-badge"><span class="dot"></span><span id="conn-status">GATEWAY LIVE</span></div>
-        <div class="aws-badge">
-            <svg width="14" height="14" viewBox="0 0 80 50" fill="none"><path d="M23.5 39.5c-9.6 4.2-15.5 1.4-19.3-2.4C.5 33.4-.5 26.5 2.5 19.5c3-7 9.8-12 17.5-12 1.5 0 3 .2 4.5.5" stroke="#FF9900" stroke-width="4" stroke-linecap="round"/><path d="M57 39.5c9.6 4.2 15.5 1.4 19.3-2.4C79.5 33.4 80.5 26.5 77.5 19.5c-3-7-9.8-12-17.5-12-1.5 0-3 .2-4.5.5" stroke="#FF9900" stroke-width="4" stroke-linecap="round"/><path d="M40 8 C30 8 22 16 22 26 C22 36 30 43 40 43 C50 43 58 36 58 26 C58 16 50 8 40 8Z" stroke="#FF9900" stroke-width="4" fill="none"/></svg>
-            AWS EC2 · us-east-1
-        </div>
-        <div class="dynamo-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#8b5cf6"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            DynamoDB Connected
-        </div>
-        <div class="chip"><span class="chip-l">MODEL</span><span class="chip-v" id="chip-model">gpt-oss-120b</span></div>
-        <button id="btn-reset" class="btn-reset" title="Reset all agent spends to $0.00 for a clean demo run">
+        <div class="chip"><span class="chip-l">LLM</span><span class="chip-v" id="chip-model">gpt-oss-120b</span></div>
+        <button id="btn-reset" class="btn-reset" title="Reset all agent spends to $0.00 for a clean demo start">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
             Reset All Spend to $0
         </button>
@@ -257,36 +228,6 @@
 
 <main class="wrap">
 
-    <!-- ══ AWS INFRASTRUCTURE BANNER ══ -->
-    <div class="aws-banner">
-        <div class="aws-banner-left">
-            <div class="aws-logo-text">Amazon Web Services</div>
-            <div class="aws-infra-details">
-                <div class="aws-detail">
-                    <div class="aws-detail-label">Compute</div>
-                    <div class="aws-detail-val">EC2 t2.micro · Ubuntu 24.04</div>
-                </div>
-                <div class="aws-detail">
-                    <div class="aws-detail-label">Database</div>
-                    <div class="aws-detail-val">DynamoDB · us-east-1</div>
-                </div>
-                <div class="aws-detail">
-                    <div class="aws-detail-label">LLM Provider</div>
-                    <div class="aws-detail-val">Groq Cloud · GPT-OSS</div>
-                </div>
-                <div class="aws-detail">
-                    <div class="aws-detail-label">State</div>
-                    <div class="aws-detail-val" id="banner-state-store">Loading…</div>
-                </div>
-            </div>
-        </div>
-        <div class="aws-status-row">
-            <span class="infra-pill green">✅ EC2 Running</span>
-            <span class="infra-pill purple">✅ DynamoDB 4 Tables</span>
-            <span class="infra-pill orange">✅ Groq API Live</span>
-            <span class="infra-pill green">✅ 7/7 Tests Passing</span>
-        </div>
-    </div>
 
     <!-- ══ KPI CARDS ══ -->
     <section class="kpi-grid">
@@ -330,9 +271,7 @@
             <span class="badge brand">Real Groq API · Real DynamoDB</span>
         </div>
 
-        <div class="how-it-works">
-            <strong>How it works:</strong> This gateway sits between your AI agents and the LLM provider. Every agent call passes through the budget engine — tokens are counted, costs are calculated, and spend is persisted atomically to AWS DynamoDB. Click the buttons below to simulate the 3 agents (<strong>Support Agent</strong>, <strong>Analytics Agent</strong>, <strong>Research Agent</strong>) running real workloads.
-        </div>
+
 
         <div class="sim-grid">
             <button class="sim-btn" id="btn-concurrent">
