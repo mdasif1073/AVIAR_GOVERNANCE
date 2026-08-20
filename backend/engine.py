@@ -87,29 +87,8 @@ class GovernanceEngine:
         team_spend = float(team.get("current_spend_usd", 0.0)) if team else 0.0
         team_pct = (team_spend / team_limit) * 100.0
 
-        # 4. Check Runaway Velocity (Bonus: >20% monthly budget consumed in 1 hour)
-        # Use relative minimum (1% of agent limit) to handle both demo micro-limits and real limits
-        recent_1h_spend = store.get_agent_recent_spend(agent_id, window_seconds=settings.RUNAWAY_WINDOW_SECONDS)
-        velocity_pct = (recent_1h_spend / agent_limit) * 100.0
-        runaway_min = max(agent_limit * 0.01, 1e-6)   # 1% of limit, but at least $0.000001
-        if velocity_pct >= settings.RUNAWAY_VELOCITY_PERCENT and recent_1h_spend >= runaway_min:
-            store.update_agent_status(agent_id, "PAUSED")
-            store.record_alert(
-                agent_id=agent_id,
-                alert_type="RUNAWAY_DETECTED",
-                message=f"CRITICAL: Agent '{agent['name']}' consumed ${recent_1h_spend:.6f} ({velocity_pct:.1f}% of budget) in 1 hour! Paused for human review.",
-                metadata={"recent_spend": recent_1h_spend, "limit": agent_limit, "velocity_pct": velocity_pct}
-            )
-            return {
-                "allowed": False,
-                "reason": "RUNAWAY_LOOP_DETECTED",
-                "message": f"Agent paused: abnormal velocity detected (${recent_1h_spend:.6f} = {velocity_pct:.1f}%/hr of budget).",
-                "disposition": "BLOCKED"
-            }
-
-        # 5. Check 100% Hard Block
+        # 4. Check 100% Hard Block
         if agent_pct >= settings.HARD_BLOCK_THRESHOLD_PERCENT or team_pct >= settings.HARD_BLOCK_THRESHOLD_PERCENT:
-            # If 100% blocked, can we substitute to a free/cheaper model if enabled, or hard block?
             # Per PS-8.1: Hard block fires at 100% consumed.
             store.record_alert(
                 agent_id=agent_id,
@@ -125,7 +104,8 @@ class GovernanceEngine:
                 "agent_pct": agent_pct
             }
 
-        # 6. Check 80% Warning & Model Substitution on Budget Pressure
+        # 5. Check 80% Warning & Model Substitution on Budget Pressure
+        #    (Evaluated BEFORE runaway detector so substitution fires independently)
         is_warning = agent_pct >= settings.WARN_THRESHOLD_PERCENT or team_pct >= settings.WARN_THRESHOLD_PERCENT
         model_to_use = requested_model
         is_substituted = False
@@ -151,16 +131,48 @@ class GovernanceEngine:
                         metadata={"original": requested_model, "substituted": model_to_use}
                     )
 
-        disposition = "REROUTED" if is_substituted else ("WARNED" if is_warning else "ALLOWED")
+            # If substitution was applied, return immediately — skip runaway check
+            # so that 80% warning scenario and runaway scenario remain independent
+            disposition = "REROUTED" if is_substituted else "WARNED"
+            return {
+                "allowed": True,
+                "model_to_use": model_to_use,
+                "is_substituted": is_substituted,
+                "is_warning": is_warning,
+                "agent_pct": agent_pct,
+                "team_pct": team_pct,
+                "disposition": disposition
+            }
 
+        # 6. Check Runaway Velocity (Bonus: >20% monthly budget consumed in 1 hour)
+        #    Only reached if agent is NOT in the 80-99% warning band
+        recent_1h_spend = store.get_agent_recent_spend(agent_id, window_seconds=settings.RUNAWAY_WINDOW_SECONDS)
+        velocity_pct = (recent_1h_spend / agent_limit) * 100.0
+        runaway_min = max(agent_limit * 0.01, 1e-6)   # 1% of limit, but at least $0.000001
+        if velocity_pct >= settings.RUNAWAY_VELOCITY_PERCENT and recent_1h_spend >= runaway_min:
+            store.update_agent_status(agent_id, "PAUSED")
+            store.record_alert(
+                agent_id=agent_id,
+                alert_type="RUNAWAY_DETECTED",
+                message=f"CRITICAL: Agent '{agent['name']}' consumed ${recent_1h_spend:.6f} ({velocity_pct:.1f}% of budget) in 1 hour! Paused for human review.",
+                metadata={"recent_spend": recent_1h_spend, "limit": agent_limit, "velocity_pct": velocity_pct}
+            )
+            return {
+                "allowed": False,
+                "reason": "RUNAWAY_LOOP_DETECTED",
+                "message": f"Agent paused: abnormal velocity detected (${recent_1h_spend:.6f} = {velocity_pct:.1f}%/hr of budget).",
+                "disposition": "BLOCKED"
+            }
+
+        # 7. Normal — allowed with no warnings
         return {
             "allowed": True,
-            "model_to_use": model_to_use,
-            "is_substituted": is_substituted,
-            "is_warning": is_warning,
+            "model_to_use": requested_model,
+            "is_substituted": False,
+            "is_warning": False,
             "agent_pct": agent_pct,
             "team_pct": team_pct,
-            "disposition": disposition
+            "disposition": "ALLOWED"
         }
 
     def record_post_execution(
