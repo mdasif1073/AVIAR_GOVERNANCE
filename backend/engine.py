@@ -87,22 +87,22 @@ class GovernanceEngine:
         team_pct = (team_spend / team_limit) * 100.0
 
         # 4. Check Runaway Velocity (Bonus: >20% monthly budget consumed in 1 hour)
-        # Minimum absolute threshold of $0.50 to avoid micro-spend false positives
+        # Use relative minimum (1% of agent limit) to handle both demo micro-limits and real limits
         recent_1h_spend = store.get_agent_recent_spend(agent_id, window_seconds=settings.RUNAWAY_WINDOW_SECONDS)
         velocity_pct = (recent_1h_spend / agent_limit) * 100.0
-        RUNAWAY_MIN_ABS_USD = 0.50  # Must spend at least $0.50/hr to trigger
-        if velocity_pct >= settings.RUNAWAY_VELOCITY_PERCENT and recent_1h_spend >= RUNAWAY_MIN_ABS_USD:
+        runaway_min = max(agent_limit * 0.01, 1e-6)   # 1% of limit, but at least $0.000001
+        if velocity_pct >= settings.RUNAWAY_VELOCITY_PERCENT and recent_1h_spend >= runaway_min:
             store.update_agent_status(agent_id, "PAUSED")
             store.record_alert(
                 agent_id=agent_id,
                 alert_type="RUNAWAY_DETECTED",
-                message=f"CRITICAL: Agent '{agent['name']}' consumed ${recent_1h_spend:.4f} ({velocity_pct:.1f}% of budget) in 1 hour! Paused for human review.",
+                message=f"CRITICAL: Agent '{agent['name']}' consumed ${recent_1h_spend:.6f} ({velocity_pct:.1f}% of budget) in 1 hour! Paused for human review.",
                 metadata={"recent_spend": recent_1h_spend, "limit": agent_limit, "velocity_pct": velocity_pct}
             )
             return {
                 "allowed": False,
                 "reason": "RUNAWAY_LOOP_DETECTED",
-                "message": f"Agent paused: abnormal velocity detected (${recent_1h_spend:.4f} = {velocity_pct:.1f}%/hr of budget).",
+                "message": f"Agent paused: abnormal velocity detected (${recent_1h_spend:.6f} = {velocity_pct:.1f}%/hr of budget).",
                 "disposition": "BLOCKED"
             }
 

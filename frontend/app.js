@@ -30,45 +30,69 @@ function toast(msg, type = "success", duration = 4000) {
 // ── SSE STREAM ─────────────────────────────────────────────
 function initSSE() {
     const statusEl = document.getElementById("conn-status");
-    const es = new EventSource("/api/events/stream");
 
-    es.onopen = () => { statusEl.textContent = "GATEWAY LIVE"; };
+    function connect() {
+        const es = new EventSource("/api/events/stream");
 
-    es.onmessage = (event) => {
-        try {
-            const { event: evtName, data } = JSON.parse(event.data);
-            if (evtName === "INITIAL_STATE") {
-                state.team         = data.team || state.team;
-                state.agents       = data.agents || [];
-                state.transactions = data.recent_transactions || [];
-                state.alerts       = data.recent_alerts || [];
-                recalcTotals();
-                renderAll();
-                // Update banner state store label
-                const ss = document.getElementById("banner-state-store");
-                if (ss) ss.textContent = data.state_store_type === "dynamodb" ? "DynamoDB (live)" : "In-Memory";
-            } else if (evtName === "TRANSACTION_PROCESSED") {
-                if (data.transaction) {
-                    state.transactions.unshift(data.transaction);
-                    if (state.transactions.length > 100) state.transactions.pop();
-                    state.totalTokens += data.transaction.total_tokens || 0;
-                    if (data.transaction.is_substituted) state.substitutionCount++;
+        es.onopen = () => { statusEl.textContent = "GATEWAY LIVE"; };
+
+        es.onmessage = (event) => {
+            try {
+                const { event: evtName, data } = JSON.parse(event.data);
+                if (evtName === "INITIAL_STATE") {
+                    state.team         = data.team || state.team;
+                    state.agents       = data.agents || [];
+                    state.transactions = data.recent_transactions || [];
+                    state.alerts       = data.recent_alerts || [];
+                    recalcTotals();
+                    renderAll();
+                } else if (evtName === "TRANSACTION_PROCESSED") {
+                    if (data.transaction) {
+                        state.transactions.unshift(data.transaction);
+                        if (state.transactions.length > 100) state.transactions.pop();
+                        state.totalTokens += data.transaction.total_tokens || 0;
+                        if (data.transaction.is_substituted) state.substitutionCount++;
+                    }
+                    if (data.agents) state.agents = data.agents;
+                    if (data.team) state.team = data.team;
+                    fetchAlerts();
+                    renderAll();
+                } else if (evtName === "REQUEST_BLOCKED") {
+                    fetchSummary();
+                } else if (evtName === "STATE_RESET") {
+                    state = { team: data.team, agents: data.agents, transactions: [], alerts: [], totalTokens: 0, substitutionCount: 0 };
+                    renderAll();
+                    toast("✅ All agent spend reset to $0.00", "success");
                 }
-                if (data.agents) state.agents = data.agents;
-                if (data.team) state.team = data.team;
-                fetchAlerts();
-                renderAll();
-            } else if (evtName === "REQUEST_BLOCKED") {
-                fetchSummary();
-            } else if (evtName === "STATE_RESET") {
-                state = { team: data.team, agents: data.agents, transactions: [], alerts: [], totalTokens: 0, substitutionCount: 0 };
-                renderAll();
-                toast("✅ All agent spend reset to $0.00", "success");
-            }
-        } catch (err) { console.error("SSE parse error:", err); }
-    };
+            } catch (err) { console.error("SSE parse error:", err); }
+        };
 
-    es.onerror = () => { statusEl.textContent = "RECONNECTING…"; };
+        es.onerror = () => {
+            statusEl.textContent = "LIVE (polling)";
+            es.close();
+            // Reconnect SSE after 3 seconds — Cloudflare drops long HTTP/2 streams, this is normal
+            setTimeout(connect, 3000);
+        };
+    }
+
+    connect();
+
+    // Polling fallback every 5 seconds — keeps dashboard fresh regardless of SSE state
+    setInterval(async () => {
+        try {
+            const r = await fetch("/api/budgets/summary");
+            if (!r.ok) return;
+            const d = await r.json();
+            state.team   = d.team;
+            state.agents = d.agents;
+            if (d.recent_transactions?.length) {
+                state.transactions = d.recent_transactions;
+                recalcTotals();
+            }
+            if (d.recent_alerts?.length) state.alerts = d.recent_alerts;
+            renderAll();
+        } catch(e) {}
+    }, 5000);
 }
 
 // ── DATA FETCH ─────────────────────────────────────────────
